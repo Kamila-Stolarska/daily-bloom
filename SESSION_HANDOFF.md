@@ -150,6 +150,22 @@ Projekt **portfolio**, główny target **iOS App Store**, dodatkowo **web demo n
 
 ---
 
+## Stan implementacji (po sesji 4 — 2026-05-29)
+
+### Co dorzucone w sesji 4
+- **Skrócony kwestionariusz:** 6 osi, **bez 2 tagów** (`somethingGood/somethingHard` zostają w `Entry` jako `false`, dawne TAG_QUESTIONS niewywoływane). **Auto-advance** po wybraniu odpowiedzi — przycisk "dalej" usunięty. Onboarding po imieniu kieruje od razu do `/entry`, nie do `/`.
+- **Notatki jako osobny byt:** nowy slice `notesByDate: Record<string, Note[]>` w store. `Note = { id, text, createdAtIso }`. Akcje: `addNote(dateIso, text)`, `deleteNote(dateIso, id)`. `Entry.note` usunięte z typu. Migracja w `hydrate()` przenosi stare `entry.note` jako pierwszą `Note` na danej dacie. `entryToDayData(e, noteLen)` przyjmuje teraz długość notatek jako drugi argument (suma długości tekstu wszystkich notatek z dnia via `notesLength()`).
+- **Nowy ekran `/note`** (`src/app/note.tsx`): composer + lista poprzednich notatek z dziś. "Paper feel" — kremowe tło `#FBFAF1`, subtelne linie zeszytu (SVG `<Line>` co `LINE_HEIGHT=32px`, opacity 0.18), antykwa Fraunces, autofocus. Wiele notatek dziennie. Działa niezależnie od kwestionariusza — można dodać notatkę nawet bez wpisu. "zapisz" w prawym górnym, każda notatka ma godzinę `HH:MM` i "usuń". `outlineStyle: 'none'` na input żeby ubić web focus border.
+- **Home compact pod iPhone 16 Pro Max (430×932) — bez scrolla.** `ScrollView` → `View flex-1`. Display headline 40px (zamiast 52), kwiatek 240px (zamiast 300), pasek tygodnia kompakt (7px kropki), kółka 28×28 zamiast 36×36. **Dwa CTA obok siebie:** pill "edytuj dzień"/"zapisz dzień" + okrągły outline "+" 56×56 → `/note`. Subtytuł reaguje na (wpis × notatki): np. "1 notatka dziś. Kwiatek czeka." vs "Dzień zapisany. 2 notatki dziś."
+- **Hydration guard** w `/note` i `/entry`. Bug: na hard nav `addNote` wywoływane przed `hydrate()` resetowało `name`/`userId` w persisted. Teraz oba ekrany triggerują `hydrate()` w `useEffect` i renderują puste `SafeAreaView` dopóki `!hydrated`.
+- **Deploy Vercel:** `vercel.json` + `vercel-build` script (`expo export -p web` + kopia `canvaskit.wasm` do `dist/`). Rewrite `/(.*)` → `/index.html` dla client routingu Expo Routera. Vercel blokował pierwszy deploy bo `git config user.email = "kamila@local"` nie pasował do GitHuba — ustawione na `kamila0212@gmail.com`, działa: https://daily-bloom-self.vercel.app/.
+
+### Otwarte
+1. **Tiptap (jutro):** `@10play/tentap-editor` jako edytor markdown w `/note` i w note-step kwestionariusza. Cross-platform przez WebView na iOS, natywny Tiptap na web. Dziś plain TextInput jako placeholder.
+2. **Animacja kwitnięcia** — dziś instant (z sesji 3, nieruszone).
+3. **Mini-kwiatki w pasku tygodnia** — dziś kropki: czarna 3.5px = wpis, szara 1.5px = sama notatka bez wpisu, mała szara = nic. Powinny być realne mini-kwiatki Skia.
+4. **iOS test** — wciąż tylko web.
+
 ## Stan implementacji (po sesji 3 — 2026-05-28)
 
 ### Faza 0 — fundament — ✅ ZROBIONE

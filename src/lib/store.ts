@@ -1,4 +1,4 @@
-// Stan aplikacji: imię + wpisy dziennika. Persist do AsyncStorage (na web: localStorage).
+// Stan aplikacji: imię + wpisy dziennika + notatki. Persist do AsyncStorage (na web: localStorage).
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DayData, Scale } from './flower/types';
@@ -13,7 +13,12 @@ export type Entry = {
   meaning: Scale;
   somethingGood: boolean;
   somethingHard: boolean;
-  note?: string;
+  createdAtIso: string;
+};
+
+export type Note = {
+  id: string;
+  text: string;
   createdAtIso: string;
 };
 
@@ -22,18 +27,23 @@ type State = {
   name: string | null;
   userId: string; // do DNA seed
   entries: Record<string, Entry>; // klucz = dateIso
+  notesByDate: Record<string, Note[]>;
   setName: (name: string) => Promise<void>;
   saveEntry: (entry: Entry) => Promise<void>;
-  setNote: (dateIso: string, note: string) => Promise<void>;
+  addNote: (dateIso: string, text: string) => Promise<Note>;
+  deleteNote: (dateIso: string, id: string) => Promise<void>;
   hydrate: () => Promise<void>;
 };
 
 const KEY = 'daily-bloom:v1';
 
+type LegacyEntry = Entry & { note?: string };
+
 type Persisted = {
   name: string | null;
   userId: string;
-  entries: Record<string, Entry>;
+  entries: Record<string, LegacyEntry>;
+  notesByDate?: Record<string, Note[]>;
 };
 
 async function loadPersisted(): Promise<Persisted | null> {
@@ -46,7 +56,12 @@ async function loadPersisted(): Promise<Persisted | null> {
   }
 }
 
-async function savePersisted(p: Persisted) {
+async function savePersisted(p: {
+  name: string | null;
+  userId: string;
+  entries: Record<string, Entry>;
+  notesByDate: Record<string, Note[]>;
+}) {
   await AsyncStorage.setItem(KEY, JSON.stringify(p));
 }
 
@@ -54,40 +69,76 @@ function genUserId(): string {
   return `u_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
+function genNoteId(): string {
+  return `n_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
+function migrate(p: Persisted): {
+  entries: Record<string, Entry>;
+  notesByDate: Record<string, Note[]>;
+} {
+  const notesByDate: Record<string, Note[]> = { ...(p.notesByDate ?? {}) };
+  const entries: Record<string, Entry> = {};
+  for (const [dateIso, legacy] of Object.entries(p.entries ?? {})) {
+    const { note, ...rest } = legacy;
+    entries[dateIso] = rest;
+    if (note && note.trim() && !notesByDate[dateIso]?.length) {
+      notesByDate[dateIso] = [
+        { id: genNoteId(), text: note, createdAtIso: legacy.createdAtIso },
+      ];
+    }
+  }
+  return { entries, notesByDate };
+}
+
 export const useStore = create<State>((set, get) => ({
   hydrated: false,
   name: null,
   userId: '',
   entries: {},
+  notesByDate: {},
   hydrate: async () => {
     const p = await loadPersisted();
     if (p) {
-      set({ ...p, hydrated: true });
+      const { entries, notesByDate } = migrate(p);
+      set({ name: p.name, userId: p.userId, entries, notesByDate, hydrated: true });
+      await savePersisted({ name: p.name, userId: p.userId, entries, notesByDate });
     } else {
       const userId = genUserId();
-      set({ name: null, userId, entries: {}, hydrated: true });
-      await savePersisted({ name: null, userId, entries: {} });
+      set({ name: null, userId, entries: {}, notesByDate: {}, hydrated: true });
+      await savePersisted({ name: null, userId, entries: {}, notesByDate: {} });
     }
   },
   setName: async (name) => {
-    const { userId, entries } = get();
+    const { userId, entries, notesByDate } = get();
     set({ name });
-    await savePersisted({ name, userId, entries });
+    await savePersisted({ name, userId, entries, notesByDate });
   },
   saveEntry: async (entry) => {
-    const { name, userId, entries } = get();
+    const { name, userId, entries, notesByDate } = get();
     const next = { ...entries, [entry.dateIso]: entry };
     set({ entries: next });
-    await savePersisted({ name, userId, entries: next });
+    await savePersisted({ name, userId, entries: next, notesByDate });
   },
-  setNote: async (dateIso, note) => {
-    const { name, userId, entries } = get();
-    const existing = entries[dateIso];
-    if (!existing) return;
-    const updated = { ...existing, note };
-    const next = { ...entries, [dateIso]: updated };
-    set({ entries: next });
-    await savePersisted({ name, userId, entries: next });
+  addNote: async (dateIso, text) => {
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error('empty note');
+    const { name, userId, entries, notesByDate } = get();
+    const note: Note = { id: genNoteId(), text: trimmed, createdAtIso: new Date().toISOString() };
+    const list = notesByDate[dateIso] ?? [];
+    const nextNotes = { ...notesByDate, [dateIso]: [...list, note] };
+    set({ notesByDate: nextNotes });
+    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
+    return note;
+  },
+  deleteNote: async (dateIso, id) => {
+    const { name, userId, entries, notesByDate } = get();
+    const list = (notesByDate[dateIso] ?? []).filter((n) => n.id !== id);
+    const nextNotes = { ...notesByDate };
+    if (list.length) nextNotes[dateIso] = list;
+    else delete nextNotes[dateIso];
+    set({ notesByDate: nextNotes });
+    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
   },
 }));
 
@@ -99,7 +150,12 @@ export function todayIso(): string {
   return `${y}-${m}-${day}`;
 }
 
-export function entryToDayData(e: Entry): DayData {
+export function notesLength(notes: Note[] | undefined): number {
+  if (!notes) return 0;
+  return notes.reduce((sum, n) => sum + n.text.length, 0);
+}
+
+export function entryToDayData(e: Entry, noteLen = 0): DayData {
   return {
     day: e.day,
     emotions: e.emotions,
@@ -109,7 +165,7 @@ export function entryToDayData(e: Entry): DayData {
     meaning: e.meaning,
     somethingGood: e.somethingGood,
     somethingHard: e.somethingHard,
-    noteLength: e.note?.length ?? 0,
+    noteLength: noteLen,
     dateIso: e.dateIso,
   };
 }

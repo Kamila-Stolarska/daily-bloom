@@ -1,6 +1,6 @@
 // Kwestionariusz dnia — używa Button/Text z ui/.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -62,10 +62,16 @@ function OptionRow({
 }
 
 export default function EntryScreen() {
+  const hydrated = useStore((s) => s.hydrated);
+  const hydrate = useStore((s) => s.hydrate);
   const saveEntry = useStore((s) => s.saveEntry);
-  const setNote = useStore((s) => s.setNote);
+  const addNote = useStore((s) => s.addNote);
   const userId = useStore((s) => s.userId);
   const name = useStore((s) => s.name);
+
+  useEffect(() => {
+    if (!hydrated) hydrate();
+  }, [hydrated, hydrate]);
 
   const [draft, setDraft] = useState<Draft>({});
   const [step, setStep] = useState<Step>({ kind: 'axis', index: 0 });
@@ -121,13 +127,17 @@ export default function EntryScreen() {
 
   async function finishNote() {
     if (savedEntry && noteText.trim()) {
-      await setNote(savedEntry.dateIso, noteText.trim());
+      await addNote(savedEntry.dateIso, noteText.trim());
     }
     router.replace('/');
   }
 
   const total = AXIS_QUESTIONS.length;
   const stepNumber = step.kind === 'axis' ? step.index + 1 : total;
+
+  if (!hydrated) {
+    return <SafeAreaView className="flex-1 bg-paper" />;
+  }
 
   // ---- AXIS ----
   if (step.kind === 'axis') {
@@ -184,7 +194,7 @@ export default function EntryScreen() {
       <SafeAreaView className="flex-1 bg-paper">
         <TopBar left={<Text variant="eyebrow">ZAKWITŁO</Text>} />
         <View className="flex-1 items-center justify-center px-6">
-          <FlowerLazy dna={dna} day={entryToDayData(savedEntry)} size={340} dnaSeed={dnaSeed} />
+          <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
           <Text
             variant="h2"
             className="text-center mt-10"
@@ -225,7 +235,7 @@ export default function EntryScreen() {
         >
           <View className="flex-row items-start gap-4 mb-10">
             <View style={{ width: 64, height: 64 }}>
-              <FlowerLazy dna={dna} day={entryToDayData(savedEntry)} size={64} dnaSeed={dnaSeed} />
+              <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={64} dnaSeed={dnaSeed} />
             </View>
             <View className="flex-1">
               <Text variant="eyebrow">DZIENNIK</Text>
