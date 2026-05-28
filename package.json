@@ -54,6 +54,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build": "expo export -p web",
+    "vercel-build": "expo export -p web && cp public/canvaskit.wasm dist/canvaskit.wasm",
     "lint": "expo lint"
   },
   "private": true
