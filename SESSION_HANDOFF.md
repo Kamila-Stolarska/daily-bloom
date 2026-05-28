@@ -150,8 +150,37 @@ Projekt **portfolio**, główny target **iOS App Store**, dodatkowo **web demo n
 
 ---
 
+## Stan implementacji (po sesji 2 — 2026-05-28)
+
+### Faza 0 — fundament — ✅ ZROBIONE
+- Expo SDK 56 + Expo Router (TS, struktura `src/app/`)
+- NativeWind 4 + Tailwind 3 z design tokens (`paper`, `ink`, `accent`, fonty)
+- Fonty Fraunces (serif) + Inter (sans) przez `@expo-google-fonts/*`
+- Zainstalowane: `@shopify/react-native-skia`, `moti`, `reanimated`, `expo-sqlite`, `expo-crypto`, `react-native-svg`
+- Home placeholder: "Daily Bloom" antykwą na kremowym tle `#F5EFE4`
+- `app.json`: name="Daily Bloom", slug="daily-bloom", bundleId="com.kamila.dailybloom"
+- TypeScript zielony, kod pushnięty na https://github.com/Kamila-Stolarska/daily-bloom
+- Pełny plan: `IMPLEMENTATION_PLAN.md`
+
+### Co dalej — Faza 1: prototyp kwiatka w Skia
+Patrz `IMPLEMENTATION_PLAN.md` → Faza 1. Punkt startowy:
+1. `lib/flower/dna.ts` — SHA-256(userId) → mulberry32 → cechy z `FLOWER_DNA.md`
+2. 3–5 ręcznych palet
+3. 2–3 archetypy płatka jako parametryczne ścieżki Skia
+4. Ekran-laboratorium: siatka kwiatków różne DNA × różne dane dnia
+5. Decyzja: 4+2 vs 6 indywidualnych płatków
+
+### Środowisko (UWAGA)
+- Node 20.20.2 jest w `~/.nvm/versions/node/v20.20.2/bin` — system ma stary Node 14 pierwszy w PATH. **Każdą komendę npm/npx prependować:**
+  ```
+  export PATH="/Users/kamilastolarska/.nvm/versions/node/v20.20.2/bin:$PATH" && <cmd>
+  ```
+- Brak Homebrew i `gh` CLI.
+- Git PAT zapisany w macOS Keychain — push działa.
+- Dev server: `npm run web` (port 8081) lub `npm run ios`.
+
 ## Jak otworzyć nową sesję
 
 W nowym czacie wystarczy napisać np.:
 
-> *"Kontynuujemy projekt Daily Bloom. Cały kontekst jest w `Desktop/Daily-Bloom/SESSION_HANDOFF.md`, `PRD.md` i `FLOWER_DNA.md`. Przeczytaj je i ruszamy z [tematem]."*
+> *"Kontynuujemy projekt Daily Bloom. Cały kontekst jest w `Desktop/Daily-Bloom/SESSION_HANDOFF.md`, `PRD.md`, `FLOWER_DNA.md` i `IMPLEMENTATION_PLAN.md`. Przeczytaj je i ruszamy z Fazą 1 (prototyp kwiatka w Skia)."*
