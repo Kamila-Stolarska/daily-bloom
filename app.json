@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Daily Bloom",
+    "slug": "daily-bloom",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "dailybloom",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.kamila.dailybloom",
+      "supportsTablet": false,
+      "icon": "./assets/expo.icon"
+    },
+    "android": {
+      "package": "com.kamila.dailybloom",
+      "adaptiveIcon": {
+        "backgroundColor": "#F5EFE4",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5EFE4",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
