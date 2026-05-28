@@ -2,11 +2,12 @@
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         paper: {
-          DEFAULT: '#F5EFE4',
+          DEFAULT: '#F6F6EA',
           dark: '#EDE5D5',
           warm: '#EFE7D7',
         },
@@ -23,9 +24,12 @@ module.exports = {
       fontFamily: {
         serif: ['Fraunces_400Regular'],
         'serif-medium': ['Fraunces_500Medium'],
+        'serif-semibold': ['Fraunces_600SemiBold'],
+        'serif-bold': ['Fraunces_700Bold'],
         'serif-italic': ['Fraunces_400Regular_Italic'],
         sans: ['Inter_400Regular'],
         'sans-medium': ['Inter_500Medium'],
+        'sans-semibold': ['Inter_600SemiBold'],
       },
     },
   },

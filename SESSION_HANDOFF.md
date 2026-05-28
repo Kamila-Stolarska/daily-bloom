@@ -150,25 +150,48 @@ Projekt **portfolio**, główny target **iOS App Store**, dodatkowo **web demo n
 
 ---
 
-## Stan implementacji (po sesji 2 — 2026-05-28)
+## Stan implementacji (po sesji 3 — 2026-05-28)
 
 ### Faza 0 — fundament — ✅ ZROBIONE
 - Expo SDK 56 + Expo Router (TS, struktura `src/app/`)
-- NativeWind 4 + Tailwind 3 z design tokens (`paper`, `ink`, `accent`, fonty)
-- Fonty Fraunces (serif) + Inter (sans) przez `@expo-google-fonts/*`
-- Zainstalowane: `@shopify/react-native-skia`, `moti`, `reanimated`, `expo-sqlite`, `expo-crypto`, `react-native-svg`
-- Home placeholder: "Daily Bloom" antykwą na kremowym tle `#F5EFE4`
-- `app.json`: name="Daily Bloom", slug="daily-bloom", bundleId="com.kamila.dailybloom"
-- TypeScript zielony, kod pushnięty na https://github.com/Kamila-Stolarska/daily-bloom
-- Pełny plan: `IMPLEMENTATION_PLAN.md`
+- NativeWind 4 + Tailwind 3 z design tokens
+- Fonty: Fraunces 400/500/600/**700** + italic, Inter 400/500/**600** (`@expo-google-fonts/*`)
+- Skia, moti, reanimated, expo-sqlite, expo-crypto, react-native-svg
 
-### Co dalej — Faza 1: prototyp kwiatka w Skia
-Patrz `IMPLEMENTATION_PLAN.md` → Faza 1. Punkt startowy:
-1. `lib/flower/dna.ts` — SHA-256(userId) → mulberry32 → cechy z `FLOWER_DNA.md`
-2. 3–5 ręcznych palet
-3. 2–3 archetypy płatka jako parametryczne ścieżki Skia
-4. Ekran-laboratorium: siatka kwiatków różne DNA × różne dane dnia
-5. Decyzja: 4+2 vs 6 indywidualnych płatków
+### Faza 1 — prototyp kwiatka — ✅ ZROBIONE (z lockiem na 1 paletę)
+- `src/lib/flower/dna.ts` — cyrb53 + mulberry32, DNA z userId
+- **MVP lock:** `paletteIndex = 0` (Akwarela). Pozostałe 5 palet w `palettes.ts` istnieje, ale są "szkicowe" (monochromatyczne). Wrócimy do losowania DNA gdy zaprojektujemy ~40 palet poziomu Akwareli.
+- `src/lib/flower/organic.ts` — `organicPetalPath()` jako teardrop z 1 łukiem per strona + jitter (poprzednia wersja z 4 CP i "garbami" się nie sprawdziła — wyglądała jak lobed lazy snowflake, wróciliśmy do prostego kropelkowatego płatka).
+- `src/components/OrganicFlower.tsx` — render dwuwarstwowy: gradient + BlurMask (krwawiące krawędzie), potem Turbulence × multiply z opacity 0.32 **wewnątrz tych samych ścieżek** (grain widoczny tylko na obszarze kwiatka, nie na tle).
+- `src/components/FlowerLazy.tsx` — wrapper z lazy-load Skia (na web `LoadSkiaWeb({ locateFile: '/canvaskit.wasm' })` przed importem `OrganicFlower`; Skia.web.js robi `JsiSkApi(global.CanvasKit)` przy imporcie i bez wcześniejszego wasm jest broken).
+
+### Faza 2 — używalna aplikacja — ✅ ZROBIONE
+- **Storage:** `src/lib/store.ts` — zustand + `@react-native-async-storage/async-storage` (na web mapuje na `localStorage`, klucz `daily-bloom:v1`). Trzyma `name`, `userId`, `entries: Record<dateIso, Entry>`. `hydrate()`, `setName()`, `saveEntry()`, `setNote()`.
+- **Onboarding** (`/onboarding`) — pyta o imię, jednorazowo. Gating w `index.tsx` przez `useEffect(() => router.replace('/onboarding'))` jeśli `!name` po hydracji.
+- **Home** (`/`) — wg szkicu Kamili: top "DAILY — BLOOM" + kropka, headline powitania zależny od pory dnia, separator, kwiatek dnia (lub placeholder "jeszcze nie zakwitł" w okręgu), falka, pill CTA, pasek tygodnia (pn–nd, dzisiaj obrysem, dni z wpisem mają kropkę).
+- **Kwestionariusz** (`/entry`) — jeden route z wewnętrzną maszyną stanu `Step`: 6 osi → 2 tagi (8/8) → bloom → note. 6 osi i 2 tagi z `src/lib/questions.ts` (mikrocopy zgodne z SESSION_HANDOFF). Po kroku 8 (zakwitnij) wpis zapisany do store, kwiatek wybloomowany, potem ekran notatki pełnoekranowy (Fraunces, dużo whitespace, "pomiń" jako dyskretny link). Po `finishNote()` → `router.replace('/')`.
+- **DayData → kwiatek:** `entryToDayData()` w store.
+
+### Faza 3 — UI primitives + typografia "studio Josh" — ✅ ZROBIONE
+- **Tło:** `#F6F6EA` (poprzednie `#F5EFE4` było zbyt brzoskwiniowe).
+- **Typografia:** wywaliliśmy italic Fraunces z body — to on dawał "retro" feel. Headline: Fraunces 700 z tracking -0.02em, leading ≈ 0.95. Body: Inter 400/500. Eyebrow labels: Inter 500 tracked 2px UPPERCASE.
+- **react-native-reusables stack** (port shadcn na RN): `class-variance-authority`, `clsx`, `tailwind-merge`, `@rn-primitives/slot`, `@rn-primitives/types`.
+- `src/lib/utils.ts` — `cn()` (twMerge + clsx).
+- `src/components/ui/text.tsx` — `<Text variant="display|h1|h2|h3|body|bodyMedium|eyebrow|caption|mono" tone="ink|muted|paper|paper-muted">` z cva + tabelą `variantStyle` na fontSize/lineHeight/letterSpacing.
+- `src/components/ui/button.tsx` — `<Button variant="pill|solid|ghost|link">` z cva + opcjonalnym `asChild` przez Slot. Wariant `pill` = czarny pill + label po lewej + arrow w okrągłym jasnym chipie po prawej (jak Josh).
+- Wszystkie 3 ekrany (`index.tsx`, `entry.tsx`, `onboarding.tsx`) przebudowane na `<Text variant=...>` + `<Button variant=...>`.
+
+### Strona laboratoryjna (`/lab`)
+- Zostaje. Wcześniejsza siatka DNA × dni — używana do iterowania kwiatka. Teraz `LabContent.tsx` pokazuje **jeden** kwiatek 420×420 (Akwarela, max odpowiedzi). Otwierane przez `/lab` (nie ma linka z UI).
+
+## Następne kroki sugerowane
+
+1. **Animacja kwitnięcia** — dziś natychmiastowa. Reanimated/Moti: fade + scale + lekka rotacja per płatek, ~1.2s.
+2. **Edycja istniejącego wpisu** — `/entry` zawsze startuje od pustego draftu i nadpisuje. Powinno hydratować `draft` z `entries[today]` jeśli istnieje.
+3. **Mini-kwiatki w pasku tygodnia** — dziś tylko czarne kropki dla dni z wpisem. Powinny być małe (≈28px) renderowane kwiatki z DayData danego dnia. Uwaga na wydajność Skia × 7.
+4. **Test na iOS** (TestFlight) — cały flow do tej pory walidowany tylko na web.
+5. **Palety:** zaprojektować ~40 palet poziomu Akwareli (ref. Federica Fragapane + akwarele). Dopiero potem odblokować losowanie w DNA.
+6. **Ogród / Statystyki** — z PRD, dopiero gdy MVP flow stabilny.
 
 ### Środowisko (UWAGA)
 - Node 20.20.2 jest w `~/.nvm/versions/node/v20.20.2/bin` — system ma stary Node 14 pierwszy w PATH. **Każdą komendę npm/npx prependować:**
@@ -183,4 +206,4 @@ Patrz `IMPLEMENTATION_PLAN.md` → Faza 1. Punkt startowy:
 
 W nowym czacie wystarczy napisać np.:
 
-> *"Kontynuujemy projekt Daily Bloom. Cały kontekst jest w `Desktop/Daily-Bloom/SESSION_HANDOFF.md`, `PRD.md`, `FLOWER_DNA.md` i `IMPLEMENTATION_PLAN.md`. Przeczytaj je i ruszamy z Fazą 1 (prototyp kwiatka w Skia)."*
+> *"Kontynuujemy projekt Daily Bloom. Cały kontekst jest w `Desktop/Daily-Bloom/SESSION_HANDOFF.md`, `PRD.md`, `FLOWER_DNA.md`. Przeczytaj sekcję 'Stan implementacji (po sesji 3)' i 'Następne kroki sugerowane'. Aplikacja jest już używalna — flow onboarding → home → kwestionariusz → kwiatek → notatka działa. Kolejny krok dobierzemy z listy."*

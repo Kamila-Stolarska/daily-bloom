@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "dailybloom",
-    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.kamila.dailybloom",
       "supportsTablet": false,
@@ -23,7 +22,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
