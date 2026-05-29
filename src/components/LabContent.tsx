@@ -1,12 +1,11 @@
-// Lab — focus na JEDNYM kwiatku.
-// Iterujemy aż akwarela zacznie wyglądać jak referencja, potem wrócimy do siatki.
+// Lab — porównanie dwóch wariantów legendy kwiatka.
 
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { OrganicFlower } from './OrganicFlower';
-import { deriveDna } from '../lib/flower/dna';
+import { FlowerChrome } from './FlowerChrome';
 import { DayData } from '../lib/flower/types';
+import { Text } from './ui/text';
 
-// Hardcode: paleta "Akwarela" (index 0), archetyp 0, środkowy random seed.
 const HERO_DNA = {
   paletteIndex: 0,
   archetypeIndex: 0,
@@ -29,31 +28,61 @@ const HERO_DAY: DayData = {
   dateIso: '2026-05-28',
 };
 
-// Deterministyczny seed dla jitteru (z user-id).
 const DNA_SEED = 1234567;
+const SIZE = 320;
 
-export default function LabContent() {
+function Variant({
+  label,
+  caption,
+  showGrid,
+}: {
+  label: string;
+  caption: string;
+  showGrid: boolean;
+}) {
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 60 }}>
-      <Text className="font-serif text-[32px] leading-[36px] text-ink mt-4 mb-1">
-        Lab — jeden kwiatek
+    <View className="items-center" style={{ marginBottom: 40 }}>
+      <Text variant="eyebrow" style={{ marginBottom: 12 }}>
+        {label}
       </Text>
-      <Text className="font-sans text-sm text-ink-muted mb-6">
-        iteracja akwarelowa wg referencji
-      </Text>
-
-      <View className="items-center justify-center my-6">
+      <View style={{ width: SIZE, height: SIZE, position: 'relative' }}>
         <OrganicFlower
           dna={HERO_DNA}
           day={HERO_DAY}
-          size={420}
+          size={SIZE}
           dnaSeed={DNA_SEED}
+          animate={false}
         />
+        <FlowerChrome size={SIZE} rotationOffset={HERO_DNA.rotationOffset} showGrid={showGrid} />
       </View>
-
-      <Text className="font-serif-italic text-base text-ink-muted text-center mt-2">
-        paleta Akwarela · DNA seed {DNA_SEED}
+      <Text variant="caption" tone="muted" style={{ marginTop: 12, textAlign: 'center' }}>
+        {caption}
       </Text>
+    </View>
+  );
+}
+
+export default function LabContent() {
+  return (
+    <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 60 }}>
+      <Text variant="h2" style={{ marginBottom: 4 }}>
+        Legenda kwiatka
+      </Text>
+      <Text variant="caption" tone="muted" style={{ marginBottom: 28 }}>
+        dwa warianty do porównania
+      </Text>
+
+      <Variant
+        label="WARIANT 1 — SIATKA + ETYKIETY"
+        caption="pełna data-viz: pierścienie skali 1–5 i 6 promieni"
+        showGrid={true}
+      />
+
+      <Variant
+        label="WARIANT 2 — SAME ETYKIETY"
+        caption="lżejsza wersja — bez siatki, kwiatek nadal pływa"
+        showGrid={false}
+      />
     </ScrollView>
   );
 }

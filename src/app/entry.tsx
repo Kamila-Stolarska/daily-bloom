@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
+import Svg, { Circle, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { AXIS_QUESTIONS, NOTE_PROMPTS } from '../lib/questions';
@@ -60,6 +60,34 @@ function TopBar({ left, center, right }: { left?: React.ReactNode; center?: Reac
   );
 }
 
+function IntensityDots({ value, selected }: { value: number; selected: boolean }) {
+  const dotSize = 6;
+  const gap = 6;
+  const total = 5;
+  const width = total * dotSize + (total - 1) * gap;
+  const filled = selected ? '#F6F6EA' : '#1A1614';
+  const muted = selected ? 'rgba(246,246,234,0.3)' : 'rgba(122,111,98,0.35)';
+  return (
+    <Svg width={width} height={dotSize}>
+      {Array.from({ length: total }).map((_, i) => {
+        const cx = i * (dotSize + gap) + dotSize / 2;
+        const on = i < value;
+        return (
+          <Circle
+            key={i}
+            cx={cx}
+            cy={dotSize / 2}
+            r={dotSize / 2}
+            fill={on ? filled : 'transparent'}
+            stroke={on ? filled : muted}
+            strokeWidth={1}
+          />
+        );
+      })}
+    </Svg>
+  );
+}
+
 function OptionRow({
   label,
   index,
@@ -79,12 +107,14 @@ function OptionRow({
         (selected ? 'bg-ink border-ink' : 'bg-paper border-ink-muted/25')
       }
     >
-      <Text variant="h3" tone={selected ? 'paper' : 'ink'}>
+      <Text
+        variant="bodyMedium"
+        tone={selected ? 'paper' : 'ink'}
+        style={{ fontSize: 17, letterSpacing: -0.1 }}
+      >
         {label}
       </Text>
-      <Text variant="mono" tone={selected ? 'paper-muted' : 'muted'}>
-        {String(index).padStart(2, '0')}
-      </Text>
+      <IntensityDots value={index} selected={selected} />
     </Pressable>
   );
 }
@@ -277,11 +307,7 @@ export default function EntryScreen() {
             <Text variant="bodyMedium">←</Text>
           </Pressable>
           <Text variant="eyebrow">NOTATKI</Text>
-          <Pressable onPress={finishNote} hitSlop={10}>
-            <Text variant="bodyMedium" tone={hasText ? 'ink' : 'muted'}>
-              {hasText ? 'zapisz' : 'pomiń'}
-            </Text>
-          </Pressable>
+          <View style={{ width: 20, height: 20 }} />
         </View>
 
         <ScrollView
@@ -297,6 +323,7 @@ export default function EntryScreen() {
               paddingTop: 12,
               paddingBottom: 12,
               overflow: 'hidden',
+              marginBottom: 28,
             }}
           >
             <PaperLines height={composerPaperHeight} />
@@ -313,6 +340,25 @@ export default function EntryScreen() {
               className="font-serif text-ink"
               style={{ fontSize: 17, lineHeight: LINE_HEIGHT, padding: 0, margin: 0, outlineStyle: 'none' } as any}
             />
+          </View>
+
+          <View className="items-center" style={{ marginTop: 4, marginBottom: 28 }}>
+            <Pressable
+              onPress={finishNote}
+              accessibilityRole="button"
+              accessibilityLabel={hasText ? 'zapisz notatkę' : 'pomiń notatkę'}
+              className="bg-ink rounded-full items-center justify-center"
+              style={{
+                paddingHorizontal: 36,
+                paddingVertical: 16,
+                minWidth: 200,
+                opacity: hasText ? 1 : 0.35,
+              }}
+            >
+              <Text variant="bodyMedium" tone="paper">
+                {hasText ? 'zapisz' : 'pomiń'}
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>

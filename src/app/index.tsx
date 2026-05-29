@@ -15,6 +15,7 @@ const NEUTRAL_DAY: DayData = {
 import { deriveDna } from '../lib/flower/dna';
 import { currentWeekIso, WEEKDAYS_PL } from '../lib/week';
 import { FlowerLazy } from '../components/FlowerLazy';
+import { FlowerChrome } from '../components/FlowerChrome';
 import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
 
@@ -178,6 +179,7 @@ export default function Home() {
                     dnaSeed={dnaSeed}
                     grain={false}
                   />
+                  <FlowerChrome size={flowerSize} rotationOffset={dna.rotationOffset} showGrid />
                   <View
                     style={{
                       position: 'absolute',
@@ -200,6 +202,7 @@ export default function Home() {
                     dnaSeed={dnaSeed}
                     outline
                   />
+                  <FlowerChrome size={flowerSize} rotationOffset={dna.rotationOffset} showGrid />
                   <View
                     style={{
                       position: 'absolute',

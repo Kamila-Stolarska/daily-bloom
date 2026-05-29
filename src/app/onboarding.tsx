@@ -41,7 +41,7 @@ export default function Onboarding() {
             Jak masz na imię?
           </Text>
           <Text variant="caption" tone="muted" className="mt-4">
-            Twój dzienniczek został tu, na Twoim urządzeniu. Bez konta, bez chmury.
+            Twój mały dzienniczek, w którym każdego dnia zakwita inny, niepowtarzalny kwiatek — utkany z tego, jak właśnie się masz.
           </Text>
 
           <TextInput
@@ -52,7 +52,7 @@ export default function Onboarding() {
             autoFocus
             returnKeyType="done"
             onSubmitEditing={submit}
-            className="font-serif text-ink mt-12 pb-3 border-b border-ink-muted/30"
+            className="font-serif text-ink mt-12 px-4 py-3 border-b border-ink-muted/30"
             style={{ fontSize: 28, letterSpacing: -0.5 }}
           />
         </View>

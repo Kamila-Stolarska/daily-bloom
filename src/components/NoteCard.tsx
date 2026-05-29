@@ -1,8 +1,23 @@
 // Karta pojedynczej notatki — używana na home (read-only) i w note.tsx (z usuń).
 
 import { Pressable, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import type { Note } from '../lib/store';
 import { Text } from './ui/text';
+
+function TrashIcon({ size = 18, color = '#7A6F62' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -29,10 +44,13 @@ export function NoteCard({ note, onPress, onDelete }: Props) {
           {formatTime(note.createdAtIso)}
         </Text>
         {onDelete && (
-          <Pressable onPress={onDelete} hitSlop={10}>
-            <Text variant="caption" style={{ color: '#7A6F62' }}>
-              usuń
-            </Text>
+          <Pressable
+            onPress={onDelete}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="usuń notatkę"
+          >
+            <TrashIcon />
           </Pressable>
         )}
       </View>

@@ -112,8 +112,12 @@ export const useStore = create<State>((set, get) => ({
   },
   setName: async (name) => {
     const { userId, entries, notesByDate } = get();
-    set({ name });
-    await savePersisted({ name, userId, entries, notesByDate });
+    const trimmed = name.trim();
+    const normalized = trimmed
+      ? trimmed.charAt(0).toLocaleUpperCase('pl-PL') + trimmed.slice(1)
+      : trimmed;
+    set({ name: normalized });
+    await savePersisted({ name: normalized, userId, entries, notesByDate });
   },
   saveEntry: async (entry) => {
     const { name, userId, entries, notesByDate } = get();
