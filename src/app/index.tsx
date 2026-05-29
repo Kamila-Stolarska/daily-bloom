@@ -94,11 +94,12 @@ export default function Home() {
   const bottomPad = tight ? 8 : 16;
   const heroGap = tight ? 16 : roomy ? 32 : 24;
 
-  // Kwiatek wypełnia ~98% dostępnego środka (cap większy żeby ładnie rósł na tablecie)
+  // Kwiatek + miejsce na etykiety legendy (~40px po każdej stronie).
+  const CHROME_PAD = 40;
   const flowerSize = Math.min(
-    Math.max(flowerBox.w * 0.98, 0),
-    Math.max(flowerBox.h * 0.98, 0),
-    640,
+    Math.max(flowerBox.w - CHROME_PAD * 2, 0),
+    Math.max(flowerBox.h - CHROME_PAD * 2, 0),
+    560,
   );
 
   function openEntry(dateIso: string) {
@@ -179,7 +180,13 @@ export default function Home() {
                     dnaSeed={dnaSeed}
                     grain={false}
                   />
-                  <FlowerChrome size={flowerSize} rotationOffset={dna.rotationOffset} showGrid />
+                  <FlowerChrome
+                    size={flowerSize}
+                    rotationOffset={dna.rotationOffset}
+                    showGrid
+                    pad={CHROME_PAD}
+                    revealKey={selectedDate}
+                  />
                   <View
                     style={{
                       position: 'absolute',
@@ -202,7 +209,6 @@ export default function Home() {
                     dnaSeed={dnaSeed}
                     outline
                   />
-                  <FlowerChrome size={flowerSize} rotationOffset={dna.rotationOffset} showGrid />
                   <View
                     style={{
                       position: 'absolute',

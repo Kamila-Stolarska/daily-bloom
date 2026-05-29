@@ -1,6 +1,7 @@
 // Subtelna siatka + etykiety osi pod kwiatkiem (legenda data-viz).
 // Renderowane jako SVG overlay — niezależne od Skia.
 
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 import { AXES } from '../lib/flower/types';
@@ -20,9 +21,55 @@ type Props = {
   showGrid?: boolean;
   /** Margines wokół kwiatka na etykiety. Domyślnie 56px. */
   pad?: number;
+  /** Klucz triggerujący ponowne wyłonienie się legendy (np. dateIso). */
+  revealKey?: string;
+  /** Opóźnienie startu fade-in po mount/zmianie revealKey. Domyślnie 1500ms (zakwitnięcie). */
+  revealDelayMs?: number;
+  /** Czas fade-in legendy. Domyślnie 900ms. */
+  revealDurationMs?: number;
 };
 
-export function FlowerChrome({ size, rotationOffset = 0, showGrid = true, pad = 56 }: Props) {
+function useFadeIn(delayMs: number, durationMs: number, key: string | undefined): number {
+  const [opacity, setOpacity] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef(0);
+
+  useEffect(() => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    setOpacity(0);
+    let cancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return;
+      startRef.current = performance.now();
+      const tick = () => {
+        const t = Math.min(1, (performance.now() - startRef.current) / durationMs);
+        const eased = 1 - Math.pow(1 - t, 3);
+        setOpacity(eased);
+        if (t < 1) rafRef.current = requestAnimationFrame(tick);
+        else rafRef.current = null;
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [delayMs, durationMs, key]);
+
+  return opacity;
+}
+
+export function FlowerChrome({
+  size,
+  rotationOffset = 0,
+  showGrid = true,
+  pad = 56,
+  revealKey,
+  revealDelayMs = 1500,
+  revealDurationMs = 900,
+}: Props) {
+  const reveal = useFadeIn(revealDelayMs, revealDurationMs, revealKey);
   const outer = size + pad * 2;
   const cx = outer / 2;
   const cy = outer / 2;
@@ -38,6 +85,7 @@ export function FlowerChrome({ size, rotationOffset = 0, showGrid = true, pad = 
         left: -pad,
         width: outer,
         height: outer,
+        opacity: reveal,
         pointerEvents: 'none',
       }}
     >
