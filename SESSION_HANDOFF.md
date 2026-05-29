@@ -150,6 +150,26 @@ Projekt **portfolio**, główny target **iOS App Store**, dodatkowo **web demo n
 
 ---
 
+## Stan implementacji (po sesji 5 — 2026-05-29)
+
+### Co dorzucone w sesji 5
+- **Home responsywny + reorganizacja przestrzeni.** `useWindowDimensions` + `onLayout` na kontenerze kwiatka. Skale `tight` (h<720) / `roomy` (h>880): headline 34/42/48px, paddingi 20/28/32, marginesy heroGap/ctaGap. Kwiatek wypełnia 98% min(w,h) dostępnego środka, cap 640px. Zweryfikowane na 375×667, 430×932, 768×1024.
+- **Klikalny kalendarz + selectedDate.** Stan `selectedDate` (default today). Klik dnia → cały widok (subtitle, kwiatek, data label "Piątek, 29 Maja") reaguje. Kalendarz pokazuje numery dni (25-31), wybrany w czarnym kółku, marker pod kółkiem dla wpisów/notatek. Polski formatter `WEEKDAY_FULL_PL` + `MONTHS_PL`.
+- **Klik na kwiatek → edycja wpisu.** Pressable wokół `FlowerLazy` → `router.push({ pathname: '/entry', params: { date: selectedDate } })`. `entry.tsx` przyjmuje `?date=` przez `useLocalSearchParams`, hydratuje draft z `entries[targetDate]` jeśli istnieje (raz, przez `draftHydrated` guard), `saveEntry` zapisuje pod `targetDate` zamiast `todayIso()`. Analogicznie `/note?date=`.
+- **Usunięty pill "edytuj dzień" i okrągły "+".** Zamiast tego jeden czarny CTA "dodaj notatkę" centrowany pod kwiatkiem (`bg-ink`, `paddingHorizontal: 28`, `paddingVertical: 16`, `minWidth: 220`).
+- **Kwiatek czysty bez grain i blur.** `OrganicFlower` prop `grain?: boolean` (default `false`). Wcześniej Turbulence (multiply 0.32) + `BlurMask blur=2.2` dawały "rozmyty smutny" wygląd. Teraz tylko gradient per płatek + opacity 0.85 (przenikanie nakładających się płatków). Lab może wciąż przekazać `grain={true}`.
+- **Krok NOTE w kwestionariuszu = wzorzec `/note`.** Topbar `← NOTATKI [zapisz|pomiń]`, composer w kremowym pudełku `#FBFAF1` z PaperLines (linie zeszytu), `autoFocus`, dynamiczna wysokość przez `onContentSizeChange`. Wyrzucony flower thumbnail, eyebrow "DZIENNIK", headline z `NOTE_PROMPTS` — prompt jest teraz `placeholder` w composerze. Brak dolnego pilla. Pomocnik `PaperLines` zduplikowany w entry.tsx (mała kopia z note.tsx).
+- **Font: Fraunces → Libre Bodoni.** `@expo-google-fonts/libre-bodoni` (wagi 400/500/600/700 + italic 400). Te same klasy `font-serif`, `font-serif-medium/semibold/bold/italic` — tylko mapping w tailwind.config.js. Pakiet `@expo-google-fonts/fraunces` odinstalowany. Wymaga restartu Metro po zmianie tailwind config.
+- **Falka pod kwiatkiem usunięta** (była organic separator).
+
+### Otwarte
+1. **Tiptap** (`@10play/tentap-editor`) jako edytor markdown w `/note` i note-step. Cross-platform przez WebView na iOS, natywny Tiptap na web. Dziś plain TextInput.
+2. **Animacja kwitnięcia** — wciąż instant.
+3. **Mini-kwiatki w pasku tygodnia** — zamiast markerów-kropek.
+4. **iOS test** — wciąż tylko web.
+5. **Nawigacja tygodniami** — kalendarz pokazuje tylko bieżący tydzień. Strzałki ← / → do poprzednich tygodni.
+6. **PaperLines duplicate** — `PaperLines` jest skopiowany w `note.tsx` i `entry.tsx`. Wydzielić do `src/components/PaperLines.tsx`.
+
 ## Stan implementacji (po sesji 4 — 2026-05-29)
 
 ### Co dorzucone w sesji 4
