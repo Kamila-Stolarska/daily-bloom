@@ -15,6 +15,7 @@ const NEUTRAL_DAY: DayData = {
 import { deriveDna } from '../lib/flower/dna';
 import { currentWeekIso, WEEKDAYS_PL } from '../lib/week';
 import { FlowerLazy } from '../components/FlowerLazy';
+import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
 
 function greeting(name: string): string {
@@ -45,13 +46,6 @@ const WEEKDAY_FULL_PL = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwa
 function formatDayLabel(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
   return `${WEEKDAY_FULL_PL[d.getDay()]}, ${d.getDate()} ${MONTHS_PL[d.getMonth()]}`;
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
 }
 
 export default function Home() {
@@ -110,8 +104,11 @@ export default function Home() {
     router.push({ pathname: '/entry', params: { date: dateIso } });
   }
 
-  function openNote(dateIso: string) {
-    router.push({ pathname: '/note', params: { date: dateIso } });
+  function openNote(dateIso: string, noteId?: string) {
+    router.push({
+      pathname: '/note',
+      params: noteId ? { date: dateIso, noteId } : { date: dateIso },
+    });
   }
 
   if (!hydrated || !name) {
@@ -152,10 +149,11 @@ export default function Home() {
         </View>
 
         {/* Kwiatek (centrum, klikalny → edycja dnia).
-            min-height żeby przy scrollu (notatki) kwiatek nie zapadał się do 0. */}
+            Stała wysokość — by przycisk i kalendarz były zawsze w tym samym miejscu,
+            niezależnie od tego, czy są notatki. Notatki scrollują się pod spodem. */}
         <View
-          className="flex-1 items-center justify-center"
-          style={{ minHeight: Math.min(winH * 0.42, 420) }}
+          className="items-center justify-center"
+          style={{ height: Math.min(winH * 0.46, 460) }}
           onLayout={(e) => {
             const { width, height } = e.nativeEvent.layout;
             if (width !== flowerBox.w || height !== flowerBox.h) {
@@ -220,16 +218,17 @@ export default function Home() {
           )}
         </View>
 
-        {/* Czarny CTA "dodaj notatkę" — środek, lekko podniesiony */}
+        {/* CTA — okrągły przycisk z plusem (dodaj notatkę) */}
         <View className="items-center" style={{ marginBottom: tight ? 16 : 24 }}>
           <Pressable
             onPress={() => openNote(selectedDate)}
             accessibilityRole="button"
-            className="bg-ink rounded-full flex-row items-center justify-center"
-            style={{ paddingHorizontal: 28, paddingVertical: 16, minWidth: 220 }}
+            accessibilityLabel="dodaj notatkę"
+            className="bg-ink rounded-full items-center justify-center"
+            style={{ width: 56, height: 56 }}
           >
-            <Text variant="bodyMedium" tone="paper">
-              dodaj notatkę
+            <Text tone="paper" style={{ fontSize: 28, lineHeight: 28, marginTop: -2 }}>
+              +
             </Text>
           </Pressable>
         </View>
@@ -296,39 +295,24 @@ export default function Home() {
         {selectedNotes.length > 0 && (
           <View style={{ marginTop: 24 }}>
             <View
-              style={{ height: 1, backgroundColor: '#E1D8CE', marginBottom: 20 }}
-            />
-            <Text variant="eyebrow" style={{ color: '#7A6F62', marginBottom: 14 }}>
-              {selectedNotes.length === 1 ? 'NOTATKA' : 'NOTATKI'}
-            </Text>
-            <View>
-              {selectedNotes
-                .slice()
-                .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso))
-                .map((n) => (
-                  <Pressable
-                    key={n.id}
-                    onPress={() => openNote(selectedDate)}
-                    accessibilityRole="button"
-                    style={{
-                      paddingVertical: 14,
-                      borderTopWidth: 1,
-                      borderTopColor: '#EDE5D5',
-                    }}
-                  >
-                    <Text variant="mono" style={{ color: '#7A6F62', marginBottom: 6 }}>
-                      {formatTime(n.createdAtIso)}
-                    </Text>
-                    <Text
-                      variant="body"
-                      style={{ color: '#1A1614', lineHeight: 22 }}
-                      numberOfLines={3}
-                    >
-                      {n.text}
-                    </Text>
-                  </Pressable>
-                ))}
+              className="flex-row items-center"
+              style={{ marginBottom: 16 }}
+            >
+              <Text variant="eyebrow" style={{ color: '#7A6F62', marginRight: 12 }}>
+                {isToday ? 'DZIŚ' : 'TEGO DNIA'} — {selectedNotes.length}
+              </Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: '#E1D8CE' }} />
             </View>
+            {selectedNotes
+              .slice()
+              .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso))
+              .map((n) => (
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  onPress={() => openNote(selectedDate, n.id)}
+                />
+              ))}
           </View>
         )}
       </ScrollView>

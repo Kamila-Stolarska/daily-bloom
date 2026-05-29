@@ -31,6 +31,7 @@ type State = {
   setName: (name: string) => Promise<void>;
   saveEntry: (entry: Entry) => Promise<void>;
   addNote: (dateIso: string, text: string) => Promise<Note>;
+  updateNote: (dateIso: string, id: string, text: string) => Promise<void>;
   deleteNote: (dateIso: string, id: string) => Promise<void>;
   hydrate: () => Promise<void>;
 };
@@ -130,6 +131,16 @@ export const useStore = create<State>((set, get) => ({
     set({ notesByDate: nextNotes });
     await savePersisted({ name, userId, entries, notesByDate: nextNotes });
     return note;
+  },
+  updateNote: async (dateIso, id, text) => {
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error('empty note');
+    const { name, userId, entries, notesByDate } = get();
+    const list = notesByDate[dateIso] ?? [];
+    const next = list.map((n) => (n.id === id ? { ...n, text: trimmed } : n));
+    const nextNotes = { ...notesByDate, [dateIso]: next };
+    set({ notesByDate: nextNotes });
+    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
   },
   deleteNote: async (dateIso, id) => {
     const { name, userId, entries, notesByDate } = get();
