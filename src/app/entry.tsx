@@ -142,6 +142,7 @@ export default function EntryScreen() {
   const [composerHeight, setComposerHeight] = useState(LINE_HEIGHT * 6);
   const noteInputRef = useRef<TextInput>(null);
   const [draftHydrated, setDraftHydrated] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Hydratuj draft z istniejącego wpisu (edycja) tylko raz po hydratacji store
   useEffect(() => {
@@ -156,6 +157,7 @@ export default function EntryScreen() {
         delight: existing.delight,
         meaning: existing.meaning,
       });
+      setIsEditing(true);
     }
     setDraftHydrated(true);
   }, [hydrated, draftHydrated, entries, targetDate]);
@@ -289,7 +291,11 @@ export default function EntryScreen() {
           </Text>
         </View>
         <View className="px-6 pb-10">
-          <Button variant="pill" label="dopisz coś od siebie" onPress={() => setStep({ kind: 'note' })} />
+          {isEditing ? (
+            <Button variant="pill" label="gotowe" onPress={() => router.replace('/')} />
+          ) : (
+            <Button variant="pill" label="dopisz coś od siebie" onPress={() => setStep({ kind: 'note' })} />
+          )}
         </View>
       </SafeAreaView>
     );

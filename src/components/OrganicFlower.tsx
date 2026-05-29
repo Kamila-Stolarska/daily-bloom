@@ -110,23 +110,31 @@ export const OrganicFlower = React.memo(function OrganicFlower({
   const cy = size / 2;
   const baseR = size * 0.42;
 
-  const globalSize = 0.55 + scaleToUnit(day.day) * 0.45;
+  // Promień legendy (zewnętrzny pierścień "5") — MUSI zgadzać się z FlowerChrome.
+  // length(v) = legendR * v/5, więc wierzchołek płatka o odpowiedzi k leży dokładnie
+  // na pierścieniu k. To wymóg data-viz: oś z formularza = pozycja na siatce.
+  const legendR = size * 0.48;
+  const lenFor = (v: number) => legendR * (v / 5);
 
-  const lenE = (0.4 + scaleToUnit(day.energy) * 0.6) * globalSize * baseR;
-  const lenB = (0.4 + scaleToUnit(day.body) * 0.6) * globalSize * baseR;
-  const lenD = (0.4 + scaleToUnit(day.delight) * 0.6) * globalSize * baseR;
-  const lenM = (0.4 + scaleToUnit(day.meaning) * 0.6) * globalSize * baseR;
-  const lenAvg = (lenE + lenB + lenD + lenM) / 4;
-  const lengths = [lenAvg, lenAvg, lenE, lenB, lenD, lenM];
+  // 6 osi = 6 własnych płatków (kolejność z AXES: day, emotions, energy, body, delight, meaning).
+  const lengths = [
+    lenFor(day.day),
+    lenFor(day.emotions),
+    lenFor(day.energy),
+    lenFor(day.body),
+    lenFor(day.delight),
+    lenFor(day.meaning),
+  ];
 
   const satFactor = 0.55 + scaleToUnit(day.emotions) * 0.45;
-  const petalBaseWidth = baseR * 0.28 * globalSize;
+  const petalBaseWidth = baseR * 0.26;
 
   // Pre-compute wszystkich płatków raz — używane dwukrotnie (color + grain).
   const petals: PetalRender[] = useMemo(
     () => AXES.map((_axis, i) => {
       const jitter = petalJitter(dnaSeed, i);
-      const length = lengths[i] * jitter.lengthScale;
+      // UWAGA: nie używamy jitter.lengthScale — długość MUSI być dokładna (skala 1–5 → pierścień).
+      const length = lengths[i];
       const width = petalBaseWidth * jitter.widthScale;
       const angleDeg = i * 60 + dna.rotationOffset + jitter.angleOffset;
       const angleRad = (angleDeg * Math.PI) / 180;
@@ -136,7 +144,7 @@ export const OrganicFlower = React.memo(function OrganicFlower({
       return { path, length, width, angleRad, tipHex, baseHex };
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dnaSeed, palette, satFactor, globalSize, day.energy, day.body, day.delight, day.meaning, dna.rotationOffset, petalBaseWidth],
+    [dnaSeed, palette, satFactor, day.day, day.emotions, day.energy, day.body, day.delight, day.meaning, dna.rotationOffset, petalBaseWidth],
   );
 
   const progress = useBloomProgress(animate, [

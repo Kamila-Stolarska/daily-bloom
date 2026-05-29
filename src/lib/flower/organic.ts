@@ -30,9 +30,10 @@ export function organicPetalPath(length: number, width: number, seed: number): s
   const lBulgeY = -L * r(0.42, 0.55); // gdzie najszerszy punkt po lewej
   const rBulgeY = -L * r(0.42, 0.55);
 
-  // Wierzchołek lekko przesunięty w bok (asymetria).
-  const tipX = r(-0.08, 0.08) * w;
-  const tipY = -L * r(0.98, 1.04);
+  // Wierzchołek DOKŁADNIE na osi w punkcie -L — wymóg data-viz:
+  // pozycja tipa odpowiada wartości skali (1–5 → pierścień 1–5 w FlowerChrome).
+  const tipX = 0;
+  const tipY = -L;
 
   // Lewy brzeg: od (0,0) krzywą do wierzchołka, "wypchnięty" na lewo w lBulgeY.
   // C cp1 (przy bazie) cp2 (przy wierzchołku) (tipX,tipY)
