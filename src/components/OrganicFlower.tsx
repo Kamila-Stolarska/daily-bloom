@@ -3,8 +3,10 @@
 // - lekki blur na krawędziach (BlurMask)
 // - grain (Turbulence) tylko WEWNĄTRZ płatków, z blend multiply
 // - asymetria kątów i szerokości
+// - animacja rozkwitania (RAF → React state) z lekkim stagger między płatkami
+//   (świadomie bez Reanimated → uniknięcie problemów z worklets/Skia transform na web)
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Canvas,
   Group,
@@ -30,9 +32,14 @@ type Props = {
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
+  /** Wyłącz animację rozkwitania (np. w stats, kiedy zmieniamy dużo na raz). */
+  animate?: boolean;
 };
 
 const scaleToUnit = (v: number) => (v - 1) / 4;
+const BLOOM_DURATION_MS = 1400;
+const PETAL_STAGGER = 0.09;
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 type PetalRender = {
   path: string;
@@ -43,9 +50,60 @@ type PetalRender = {
   baseHex: string;
 };
 
+/** RAF-driven progress 0→1; re-startuje, gdy zmieni się którakolwiek wartość z `keys`. */
+function useBloomProgress(animate: boolean, keys: ReadonlyArray<unknown>): number {
+  const [progress, setProgress] = useState<number>(animate ? 0 : 1);
+  const startedAtRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!animate) {
+      setProgress(1);
+      return;
+    }
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    startedAtRef.current = performance.now();
+    const tick = () => {
+      const elapsed = performance.now() - startedAtRef.current;
+      const p = Math.min(1, elapsed / BLOOM_DURATION_MS);
+      setProgress(p);
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animate, ...keys]);
+
+  return progress;
+}
+
+function petalTransform(petal: PetalRender, index: number, cx: number, cy: number, progress: number) {
+  const delay = index * PETAL_STAGGER;
+  const span = 1 - delay;
+  const raw = (progress - delay) / span;
+  const t = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+  const eased = easeOutCubic(t);
+  const rotateOffset = (1 - eased) * 0.35; // ~20° domknięcia na starcie
+  return [
+    { translateX: cx },
+    { translateY: cy },
+    { rotate: petal.angleRad - rotateOffset },
+    { scale: Math.max(eased, 0.001) },
+  ];
+}
+
 export const OrganicFlower = React.memo(function OrganicFlower({
   dna, day, size, dnaSeed, grain = false,
   outline = false, outlineColor = '#E1D8CE', outlineWidth = 1,
+  animate = true,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
   const cx = size / 2;
@@ -81,18 +139,16 @@ export const OrganicFlower = React.memo(function OrganicFlower({
     [dnaSeed, palette, satFactor, globalSize, day.energy, day.body, day.delight, day.meaning, dna.rotationOffset, petalBaseWidth],
   );
 
+  const progress = useBloomProgress(animate, [
+    dnaSeed, day.day, day.energy, day.body, day.delight, day.meaning, day.emotions,
+    day.dateIso, outline,
+  ]);
+
   if (outline) {
     return (
       <Canvas style={{ width: size, height: size }}>
         {petals.map((p, i) => (
-          <Group
-            key={`outline-${i}`}
-            transform={[
-              { translateX: cx },
-              { translateY: cy },
-              { rotate: p.angleRad },
-            ]}
-          >
+          <Group key={`outline-${i}`} transform={petalTransform(p, i, cx, cy, progress)}>
             <Path
               path={p.path}
               style="stroke"
@@ -109,14 +165,7 @@ export const OrganicFlower = React.memo(function OrganicFlower({
     <Canvas style={{ width: size, height: size }}>
       {/* Warstwa kolorów — gradient + lekki blur dla "krwawiących" krawędzi. */}
       {petals.map((p, i) => (
-        <Group
-          key={`color-${i}`}
-          transform={[
-            { translateX: cx },
-            { translateY: cy },
-            { rotate: p.angleRad },
-          ]}
-        >
+        <Group key={`color-${i}`} transform={petalTransform(p, i, cx, cy, progress)}>
           <Path path={p.path} opacity={0.85}>
             {grain && <BlurMask blur={2.2} style="normal" />}
             <LinearGradient
@@ -128,19 +177,11 @@ export const OrganicFlower = React.memo(function OrganicFlower({
         </Group>
       ))}
 
-      {/* Warstwa grain — Turbulence wewnątrz tych samych ścieżek, multiply blend.
-          Grain widoczny tylko na obszarze kwiatka, nie w tle. */}
+      {/* Warstwa grain — Turbulence wewnątrz tych samych ścieżek, multiply blend. */}
       {grain && (
         <Group blendMode="multiply" opacity={0.32}>
           {petals.map((p, i) => (
-            <Group
-              key={`grain-${i}`}
-              transform={[
-                { translateX: cx },
-                { translateY: cy },
-                { rotate: p.angleRad },
-              ]}
-            >
+            <Group key={`grain-${i}`} transform={petalTransform(p, i, cx, cy, progress)}>
               <Path path={p.path}>
                 <Turbulence
                   freqX={1.8}
