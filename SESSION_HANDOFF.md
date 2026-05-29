@@ -150,6 +150,25 @@ Projekt **portfolio**, główny target **iOS App Store**, dodatkowo **web demo n
 
 ---
 
+## Stan implementacji (po sesji 6 — 2026-05-29)
+
+### Co dorzucone w sesji 6
+- **Bugfix: "znika data" w kalendarzu.** Po przeklikiwaniu dni numery 28/29 znikały (cream-on-cream). Przyczyna: NativeWind/RNW nie deduplikuje klas `text-*` (custom kolory `text-ink`/`text-paper`/`text-ink-muted` nie są w domyślnym configu twMerge), więc przy zmianie propa `tone` className kumulowało stary `text-paper` razem z nowym i CSS cascade wybierał ostatni. **Fix:** w `index.tsx` week strip — inline `style={{ color: numColor/labelColor }}` zamiast propa `tone`. Tekst na kwiatku "dotknij, by edytować" też przeniesiony na inline `style={{ color: '#161311' }}` (#161311 = ink #1A1614 -15%).
+- **Outline kwiatka jako placeholder dla pustych dni.** `OrganicFlower` nowe propy `outline?: boolean`, `outlineColor?: string` (default `#E1D8CE`), `outlineWidth?: number` (default 1). Gdy outline=true, renderuje te same ścieżki płatków tylko jako `style="stroke"`, bez gradientu/grain/blur. Przekazane przez `FlowerLazy`. Home używa `NEUTRAL_DAY = {day:5,emotions:5,energy:5,body:5,delight:5,meaning:5,...}` (wszystko 5 → max rozmiar) żeby outline wypełnił całą przestrzeń jak prawdziwy kwiatek. Środek: napis "brak wpisu / dotknij, by dodać" wycentrowany.
+- **Tekst overlay na wypełnionym kwiatku:** "dotknij, by edytować" wycentrowany w 34% średnicy, `variant="caption"` + inline color `#161311`. Bez chipa/tła — sam tekst na płatkach (user explicit). Klik na cały Pressable kwiatka → `/entry?date=`.
+- **Notatki dnia widoczne pod kalendarzem na home.** Całe home opakowane w `ScrollView` (`contentContainerStyle.flexGrow:1`, brak scroll indicatora). Kwiatek `flex-1` + `minHeight: min(winH*0.42, 420)` żeby nie zapadł się gdy notatki wypchną content. Po week strip: separator 1px #E1D8CE, eyebrow `NOTATKA`/`NOTATKI` (dep. od liczby), karta per notatka — `HH:MM` mono muted + `usuń` po prawej + plain `body` (sans, max 3 linie), thin top border #EDE5D5 między pozycjami. Klik karty → `/note?date=`. Pokazuje notatki **wybranego dnia** (nie dziś sztywno), spójnie z kalendarzem.
+- **Spójność stylu `/note` z home.** Kompozer (kremowy notes z PaperLines) zostaje — kontekst aktywnego pisania. Lista pod nim spłaszczona: `NoteCard` bez pudełka, plain text sans + time eyebrow + thin separator (jak na home). Eyebrow `NOTATKI` (zamiast `DZIŚ — N` z dekoracyjną linią).
+- **Bugfixy konsoli:** `router.back()` w `/note` i `/entry` (krok 0) → `router.canGoBack() ? back() : replace('/')` — eliminuje GO_BACK errors przy hard refresh / direct link. `PaperLines` (w note.tsx i entry.tsx) opakowany w `<View style={{ pointerEvents: 'none' }}>` zamiast deprecated propa `pointerEvents="none"` na `Svg`.
+
+### Otwarte
+1. **Tiptap** wciąż czeka (`@10play/tentap-editor` dla `/note` i note-step).
+2. **Animacja kwitnięcia** — wciąż instant.
+3. **Mini-kwiatki w pasku tygodnia** — wciąż kropki.
+4. **iOS test** — wciąż tylko web.
+5. **Nawigacja tygodniami** ← / → — kalendarz pokazuje tylko bieżący.
+6. **PaperLines duplicate** w `note.tsx` i `entry.tsx` (do `src/components/PaperLines.tsx`).
+7. **NativeWind dedup bug może być gdzie indziej.** Fix punktowy w week stripie i overlay tekście. Jeśli zauważymy podobne "znika kolor" w innych miejscach gdzie `tone` zmienia się dynamicznie → zastosować ten sam wzorzec (inline `style={{ color }}`). Docelowo: rozszerzyć config twMerge o nasze custom kolory albo zrezygnować z propa `tone` na rzecz wprost stylów.
+
 ## Stan implementacji (po sesji 5 — 2026-05-29)
 
 ### Co dorzucone w sesji 5

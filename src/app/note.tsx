@@ -13,28 +13,25 @@ const LINE_HEIGHT = 32;
 function PaperLines({ height }: { height: number }) {
   const lines = Math.max(1, Math.floor(height / LINE_HEIGHT));
   return (
-    <Svg
-      width="100%"
-      height={height}
-      style={{ position: 'absolute', top: 0, left: 0 }}
-      pointerEvents="none"
-    >
-      {Array.from({ length: lines }).map((_, i) => {
-        const y = (i + 1) * LINE_HEIGHT;
-        return (
-          <Line
-            key={i}
-            x1={0}
-            x2="100%"
-            y1={y}
-            y2={y}
-            stroke="#A89C8C"
-            strokeOpacity={0.18}
-            strokeWidth={0.5}
-          />
-        );
-      })}
-    </Svg>
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height, pointerEvents: 'none' }}>
+      <Svg width="100%" height={height}>
+        {Array.from({ length: lines }).map((_, i) => {
+          const y = (i + 1) * LINE_HEIGHT;
+          return (
+            <Line
+              key={i}
+              x1={0}
+              x2="100%"
+              y1={y}
+              y2={y}
+              stroke="#A89C8C"
+              strokeOpacity={0.18}
+              strokeWidth={0.5}
+            />
+          );
+        })}
+      </Svg>
+    </View>
   );
 }
 
@@ -52,38 +49,25 @@ function NoteCard({
   note: Note;
   onDelete: () => void;
 }) {
-  const lineCount = Math.max(2, note.text.split('\n').length + Math.floor(note.text.length / 40));
-  const paperHeight = lineCount * LINE_HEIGHT + 24;
   return (
-    <View className="mb-5">
-      <View className="flex-row items-center justify-between mb-2">
-        <Text variant="mono">{formatTime(note.createdAtIso)}</Text>
+    <View
+      style={{
+        paddingVertical: 14,
+        borderTopWidth: 1,
+        borderTopColor: '#EDE5D5',
+      }}
+    >
+      <View className="flex-row items-center justify-between" style={{ marginBottom: 6 }}>
+        <Text variant="mono" style={{ color: '#7A6F62' }}>{formatTime(note.createdAtIso)}</Text>
         <Pressable onPress={onDelete} hitSlop={10}>
-          <Text variant="caption" tone="muted">
+          <Text variant="caption" style={{ color: '#7A6F62' }}>
             usuń
           </Text>
         </Pressable>
       </View>
-      <View
-        style={{
-          minHeight: paperHeight,
-          backgroundColor: '#FBFAF1',
-          borderRadius: 14,
-          paddingHorizontal: 18,
-          paddingTop: 12,
-          paddingBottom: 12,
-          overflow: 'hidden',
-        }}
-      >
-        <PaperLines height={paperHeight} />
-        <Text
-          variant="body"
-          className="font-serif"
-          style={{ fontSize: 17, lineHeight: LINE_HEIGHT }}
-        >
-          {note.text}
-        </Text>
-      </View>
+      <Text variant="body" style={{ color: '#1A1614', lineHeight: 22 }}>
+        {note.text}
+      </Text>
     </View>
   );
 }
@@ -130,7 +114,7 @@ export default function NoteScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <View className="px-7 pt-6 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
           <Text variant="bodyMedium">←</Text>
         </Pressable>
         <Text variant="eyebrow">NOTATKI</Text>
@@ -174,10 +158,9 @@ export default function NoteScreen() {
         </View>
 
         {notes.length > 0 && (
-          <View className="mb-4 flex-row items-center">
-            <Text variant="eyebrow">DZIŚ — {notes.length}</Text>
-            <View className="flex-1 h-px bg-ink-muted/20 ml-3" />
-          </View>
+          <Text variant="eyebrow" style={{ color: '#7A6F62', marginBottom: 8 }}>
+            {notes.length === 1 ? 'NOTATKA' : 'NOTATKI'}
+          </Text>
         )}
 
         {notes

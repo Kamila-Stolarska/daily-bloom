@@ -23,12 +23,8 @@ const LINE_HEIGHT = 32;
 function PaperLines({ height }: { height: number }) {
   const lines = Math.max(1, Math.floor(height / LINE_HEIGHT));
   return (
-    <Svg
-      width="100%"
-      height={height}
-      style={{ position: 'absolute', top: 0, left: 0 }}
-      pointerEvents="none"
-    >
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height, pointerEvents: 'none' }}>
+    <Svg width="100%" height={height}>
       {Array.from({ length: lines }).map((_, i) => {
         const y = (i + 1) * LINE_HEIGHT;
         return (
@@ -45,6 +41,7 @@ function PaperLines({ height }: { height: number }) {
         );
       })}
     </Svg>
+    </View>
   );
 }
 
@@ -158,7 +155,10 @@ export default function EntryScreen() {
 
   function back() {
     if (step.kind === 'axis' && step.index > 0) setStep({ kind: 'axis', index: step.index - 1 });
-    else if (step.kind === 'axis' && step.index === 0) router.back();
+    else if (step.kind === 'axis' && step.index === 0) {
+      if (router.canGoBack()) router.back();
+      else router.replace('/');
+    }
   }
 
   async function finalizeEntry(d: Draft) {

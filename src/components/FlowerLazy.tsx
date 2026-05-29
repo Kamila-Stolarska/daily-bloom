@@ -13,6 +13,9 @@ type Props = {
   size: number;
   dnaSeed: number;
   grain?: boolean;
+  outline?: boolean;
+  outlineColor?: string;
+  outlineWidth?: number;
 };
 
 export function FlowerLazy(props: Props) {

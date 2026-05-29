@@ -27,6 +27,9 @@ type Props = {
   size: number;
   dnaSeed: number;
   grain?: boolean;
+  outline?: boolean;
+  outlineColor?: string;
+  outlineWidth?: number;
 };
 
 const scaleToUnit = (v: number) => (v - 1) / 4;
@@ -42,6 +45,7 @@ type PetalRender = {
 
 export const OrganicFlower = React.memo(function OrganicFlower({
   dna, day, size, dnaSeed, grain = false,
+  outline = false, outlineColor = '#E1D8CE', outlineWidth = 1,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
   const cx = size / 2;
@@ -76,6 +80,30 @@ export const OrganicFlower = React.memo(function OrganicFlower({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dnaSeed, palette, satFactor, globalSize, day.energy, day.body, day.delight, day.meaning, dna.rotationOffset, petalBaseWidth],
   );
+
+  if (outline) {
+    return (
+      <Canvas style={{ width: size, height: size }}>
+        {petals.map((p, i) => (
+          <Group
+            key={`outline-${i}`}
+            transform={[
+              { translateX: cx },
+              { translateY: cy },
+              { rotate: p.angleRad },
+            ]}
+          >
+            <Path
+              path={p.path}
+              style="stroke"
+              strokeWidth={outlineWidth}
+              color={outlineColor}
+            />
+          </Group>
+        ))}
+      </Canvas>
+    );
+  }
 
   return (
     <Canvas style={{ width: size, height: size }}>

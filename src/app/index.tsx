@@ -1,10 +1,17 @@
 // Home — używa Button/Text z react-native-reusables-style ui/.
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { entryToDayData, notesLength, todayIso, useStore } from '../lib/store';
+import type { DayData } from '../lib/flower/types';
+
+// Outline-placeholder: maksymalne wartości żeby kwiatek wypełnił pełną przestrzeń.
+const NEUTRAL_DAY: DayData = {
+  day: 5, emotions: 5, energy: 5, body: 5, delight: 5, meaning: 5,
+  somethingGood: false, somethingHard: false,
+};
 import { deriveDna } from '../lib/flower/dna';
 import { currentWeekIso, WEEKDAYS_PL } from '../lib/week';
 import { FlowerLazy } from '../components/FlowerLazy';
@@ -38,6 +45,13 @@ const WEEKDAY_FULL_PL = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwa
 function formatDayLabel(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
   return `${WEEKDAY_FULL_PL[d.getDay()]}, ${d.getDate()} ${MONTHS_PL[d.getMonth()]}`;
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
 }
 
 export default function Home() {
@@ -106,9 +120,15 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1 bg-paper">
-      <View
+      <ScrollView
         className="flex-1"
-        style={{ paddingHorizontal: horizontalPad, paddingTop: topPad, paddingBottom: bottomPad }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: horizontalPad,
+          paddingTop: topPad,
+          paddingBottom: bottomPad,
+        }}
+        showsVerticalScrollIndicator={false}
       >
         {/* Top label */}
         <View className="flex-row items-center justify-between">
@@ -131,9 +151,11 @@ export default function Home() {
           </Text>
         </View>
 
-        {/* Kwiatek (centrum, klikalny → edycja dnia) */}
+        {/* Kwiatek (centrum, klikalny → edycja dnia).
+            min-height żeby przy scrollu (notatki) kwiatek nie zapadał się do 0. */}
         <View
           className="flex-1 items-center justify-center"
+          style={{ minHeight: Math.min(winH * 0.42, 420) }}
           onLayout={(e) => {
             const { width, height } = e.nativeEvent.layout;
             if (width !== flowerBox.w || height !== flowerBox.h) {
@@ -150,21 +172,48 @@ export default function Home() {
               className="items-center justify-center"
             >
               {selectedEntry ? (
-                <FlowerLazy
-                  dna={dna}
-                  day={entryToDayData(selectedEntry, notesLength(selectedNotes))}
-                  size={flowerSize}
-                  dnaSeed={dnaSeed}
-                  grain={false}
-                />
+                <View style={{ width: flowerSize, height: flowerSize }} className="items-center justify-center">
+                  <FlowerLazy
+                    dna={dna}
+                    day={entryToDayData(selectedEntry, notesLength(selectedNotes))}
+                    size={flowerSize}
+                    dnaSeed={dnaSeed}
+                    grain={false}
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      width: flowerSize * 0.34,
+                      height: flowerSize * 0.34,
+                    }}
+                    className="items-center justify-center"
+                  >
+                    <Text variant="caption" className="text-center" style={{ color: '#161311' }}>
+                      {'dotknij,\nby edytować'}
+                    </Text>
+                  </View>
+                </View>
               ) : (
-                <View
-                  style={{ width: flowerSize * 0.32, height: flowerSize * 0.32 }}
-                  className="rounded-full border border-ink-muted/25 items-center justify-center"
-                >
-                  <Text variant="caption" tone="muted" className="text-center">
-                    {isToday ? 'jeszcze\nnie zakwitł' : 'brak wpisu\ndotknij, by dodać'}
-                  </Text>
+                <View style={{ width: flowerSize, height: flowerSize }} className="items-center justify-center">
+                  <FlowerLazy
+                    dna={dna}
+                    day={NEUTRAL_DAY}
+                    size={flowerSize}
+                    dnaSeed={dnaSeed}
+                    outline
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      width: flowerSize * 0.34,
+                      height: flowerSize * 0.34,
+                    }}
+                    className="rounded-full items-center justify-center"
+                  >
+                    <Text variant="caption" tone="muted" className="text-center">
+                      {isToday ? 'jeszcze\nnie zakwitł' : 'brak wpisu\ndotknij, by dodać'}
+                    </Text>
+                  </View>
                 </View>
               )}
             </Pressable>
@@ -198,6 +247,12 @@ export default function Home() {
             const isSelected = iso === selectedDate;
             const isTodayCell = iso === today;
             const dayNum = new Date(iso + 'T00:00:00').getDate();
+            // Inline color zamiast `tone` — NativeWind/RNW nie deduplikuje klas
+            // text-* przy dynamicznej zmianie propa, więc po przeklikiwaniu dni
+            // stary `text-paper` zostawał w className i numery stawały się
+            // kremowe na kremowym tle (niewidoczne).
+            const numColor = isSelected ? '#F6F6EA' : isTodayCell ? '#1A1614' : '#7A6F62';
+            const labelColor = isSelected ? '#1A1614' : '#7A6F62';
             return (
               <Pressable
                 key={iso}
@@ -209,8 +264,8 @@ export default function Home() {
               >
                 <Text
                   variant="mono"
-                  tone={isSelected ? 'ink' : 'muted'}
                   className="mb-2"
+                  style={{ color: labelColor }}
                 >
                   {WEEKDAYS_PL[i][0].toUpperCase() + WEEKDAYS_PL[i].slice(1)}
                 </Text>
@@ -220,10 +275,7 @@ export default function Home() {
                     (isSelected ? 'bg-ink' : '')
                   }
                 >
-                  <Text
-                    variant="bodyMedium"
-                    tone={isSelected ? 'paper' : isTodayCell ? 'ink' : 'muted'}
-                  >
+                  <Text variant="bodyMedium" style={{ color: numColor }}>
                     {dayNum}
                   </Text>
                 </View>
@@ -239,7 +291,47 @@ export default function Home() {
             );
           })}
         </View>
-      </View>
+
+        {/* Notatki wybranego dnia — pojawiają się gdy są jakieś. */}
+        {selectedNotes.length > 0 && (
+          <View style={{ marginTop: 24 }}>
+            <View
+              style={{ height: 1, backgroundColor: '#E1D8CE', marginBottom: 20 }}
+            />
+            <Text variant="eyebrow" style={{ color: '#7A6F62', marginBottom: 14 }}>
+              {selectedNotes.length === 1 ? 'NOTATKA' : 'NOTATKI'}
+            </Text>
+            <View>
+              {selectedNotes
+                .slice()
+                .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso))
+                .map((n) => (
+                  <Pressable
+                    key={n.id}
+                    onPress={() => openNote(selectedDate)}
+                    accessibilityRole="button"
+                    style={{
+                      paddingVertical: 14,
+                      borderTopWidth: 1,
+                      borderTopColor: '#EDE5D5',
+                    }}
+                  >
+                    <Text variant="mono" style={{ color: '#7A6F62', marginBottom: 6 }}>
+                      {formatTime(n.createdAtIso)}
+                    </Text>
+                    <Text
+                      variant="body"
+                      style={{ color: '#1A1614', lineHeight: 22 }}
+                      numberOfLines={3}
+                    >
+                      {n.text}
+                    </Text>
+                  </Pressable>
+                ))}
+            </View>
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
