@@ -195,7 +195,7 @@ export default function Home() {
                 <View style={{ width: flowerSize, height: flowerSize }} className="items-center justify-center">
                   <FlowerLazy
                     dna={dna}
-                    day={NEUTRAL_DAY}
+                    day={{ ...NEUTRAL_DAY, dateIso: selectedDate }}
                     size={flowerSize}
                     dnaSeed={dnaSeed}
                     outline
