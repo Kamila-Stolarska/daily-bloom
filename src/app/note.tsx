@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Svg, { Line } from 'react-native-svg';
 import { Note, todayIso, useStore } from '../lib/store';
 import { Text } from '../components/ui/text';
@@ -99,7 +99,8 @@ export default function NoteScreen() {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
-  const today = todayIso();
+  const params = useLocalSearchParams<{ date?: string }>();
+  const today = (typeof params.date === 'string' && params.date) || todayIso();
   const notes = useMemo(() => notesByDate[today] ?? [], [notesByDate, today]);
 
   const [text, setText] = useState('');

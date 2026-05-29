@@ -12,6 +12,7 @@ type Props = {
   day: DayData;
   size: number;
   dnaSeed: number;
+  grain?: boolean;
 };
 
 export function FlowerLazy(props: Props) {

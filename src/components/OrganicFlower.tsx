@@ -26,6 +26,7 @@ type Props = {
   day: DayData;
   size: number;
   dnaSeed: number;
+  grain?: boolean;
 };
 
 const scaleToUnit = (v: number) => (v - 1) / 4;
@@ -40,7 +41,7 @@ type PetalRender = {
 };
 
 export const OrganicFlower = React.memo(function OrganicFlower({
-  dna, day, size, dnaSeed,
+  dna, day, size, dnaSeed, grain = false,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
   const cx = size / 2;
@@ -88,8 +89,8 @@ export const OrganicFlower = React.memo(function OrganicFlower({
             { rotate: p.angleRad },
           ]}
         >
-          <Path path={p.path} opacity={0.78}>
-            <BlurMask blur={2.2} style="normal" />
+          <Path path={p.path} opacity={0.85}>
+            {grain && <BlurMask blur={2.2} style="normal" />}
             <LinearGradient
               start={vec(0, 0)}
               end={vec(0, -p.length)}
@@ -101,27 +102,29 @@ export const OrganicFlower = React.memo(function OrganicFlower({
 
       {/* Warstwa grain — Turbulence wewnątrz tych samych ścieżek, multiply blend.
           Grain widoczny tylko na obszarze kwiatka, nie w tle. */}
-      <Group blendMode="multiply" opacity={0.32}>
-        {petals.map((p, i) => (
-          <Group
-            key={`grain-${i}`}
-            transform={[
-              { translateX: cx },
-              { translateY: cy },
-              { rotate: p.angleRad },
-            ]}
-          >
-            <Path path={p.path}>
-              <Turbulence
-                freqX={1.8}
-                freqY={1.8}
-                octaves={3}
-                seed={(dnaSeed ^ (i * 9181)) & 0xffff}
-              />
-            </Path>
-          </Group>
-        ))}
-      </Group>
+      {grain && (
+        <Group blendMode="multiply" opacity={0.32}>
+          {petals.map((p, i) => (
+            <Group
+              key={`grain-${i}`}
+              transform={[
+                { translateX: cx },
+                { translateY: cy },
+                { rotate: p.angleRad },
+              ]}
+            >
+              <Path path={p.path}>
+                <Turbulence
+                  freqX={1.8}
+                  freqY={1.8}
+                  octaves={3}
+                  seed={(dnaSeed ^ (i * 9181)) & 0xffff}
+                />
+              </Path>
+            </Group>
+          ))}
+        </Group>
+      )}
     </Canvas>
   );
 });

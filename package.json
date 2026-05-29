@@ -3,8 +3,8 @@
   "main": "expo-router/entry",
   "version": "0.1.0",
   "dependencies": {
-    "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/libre-bodoni": "^0.4.2",
     "@expo/ui": "~56.0.14",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@rn-primitives/slot": "^1.4.0",

@@ -1,9 +1,10 @@
 // Kwestionariusz dnia — używa Button/Text z ui/.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import Svg, { Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { AXIS_QUESTIONS, NOTE_PROMPTS } from '../lib/questions';
 import { Scale } from '../lib/flower/types';
 import { Entry, entryToDayData, todayIso, useStore } from '../lib/store';
@@ -16,6 +17,36 @@ type Draft = Partial<Record<(typeof AXIS_QUESTIONS)[number]['axis'], Scale>> & {
   somethingGood?: boolean;
   somethingHard?: boolean;
 };
+
+const LINE_HEIGHT = 32;
+
+function PaperLines({ height }: { height: number }) {
+  const lines = Math.max(1, Math.floor(height / LINE_HEIGHT));
+  return (
+    <Svg
+      width="100%"
+      height={height}
+      style={{ position: 'absolute', top: 0, left: 0 }}
+      pointerEvents="none"
+    >
+      {Array.from({ length: lines }).map((_, i) => {
+        const y = (i + 1) * LINE_HEIGHT;
+        return (
+          <Line
+            key={i}
+            x1={0}
+            x2="100%"
+            y1={y}
+            y2={y}
+            stroke="#A89C8C"
+            strokeOpacity={0.18}
+            strokeWidth={0.5}
+          />
+        );
+      })}
+    </Svg>
+  );
+}
 
 type Step =
   | { kind: 'axis'; index: number }
@@ -68,15 +99,39 @@ export default function EntryScreen() {
   const addNote = useStore((s) => s.addNote);
   const userId = useStore((s) => s.userId);
   const name = useStore((s) => s.name);
+  const entries = useStore((s) => s.entries);
 
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
+  const params = useLocalSearchParams<{ date?: string }>();
+  const targetDate = (typeof params.date === 'string' && params.date) || todayIso();
+
   const [draft, setDraft] = useState<Draft>({});
   const [step, setStep] = useState<Step>({ kind: 'axis', index: 0 });
   const [savedEntry, setSavedEntry] = useState<Entry | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [composerHeight, setComposerHeight] = useState(LINE_HEIGHT * 6);
+  const noteInputRef = useRef<TextInput>(null);
+  const [draftHydrated, setDraftHydrated] = useState(false);
+
+  // Hydratuj draft z istniejącego wpisu (edycja) tylko raz po hydratacji store
+  useEffect(() => {
+    if (!hydrated || draftHydrated) return;
+    const existing = entries[targetDate];
+    if (existing) {
+      setDraft({
+        day: existing.day,
+        emotions: existing.emotions,
+        energy: existing.energy,
+        body: existing.body,
+        delight: existing.delight,
+        meaning: existing.meaning,
+      });
+    }
+    setDraftHydrated(true);
+  }, [hydrated, draftHydrated, entries, targetDate]);
 
   const dna = useMemo(() => deriveDna(userId || 'anon'), [userId]);
   const dnaSeed = useMemo(() => {
@@ -107,7 +162,7 @@ export default function EntryScreen() {
   }
 
   async function finalizeEntry(d: Draft) {
-    const dateIso = todayIso();
+    const dateIso = targetDate;
     const entry: Entry = {
       dateIso,
       day: (d.day ?? 3) as Scale,
@@ -212,54 +267,54 @@ export default function EntryScreen() {
 
   // ---- NOTE ----
   if (step.kind === 'note' && savedEntry) {
+    const linesInComposer = Math.max(8, Math.floor(composerHeight / LINE_HEIGHT));
+    const composerPaperHeight = linesInComposer * LINE_HEIGHT + 24;
+    const hasText = !!noteText.trim();
     return (
       <SafeAreaView className="flex-1 bg-paper">
-        <TopBar
-          left={
-            <Pressable onPress={() => setStep({ kind: 'bloom' })}>
-              <Text variant="bodyMedium">←</Text>
-            </Pressable>
-          }
-          right={
-            <Pressable onPress={finishNote}>
-              <Text variant="caption" tone="muted">
-                pomiń
-              </Text>
-            </Pressable>
-          }
-        />
+        <View className="px-7 pt-6 flex-row items-center justify-between">
+          <Pressable onPress={() => setStep({ kind: 'bloom' })}>
+            <Text variant="bodyMedium">←</Text>
+          </Pressable>
+          <Text variant="eyebrow">NOTATKI</Text>
+          <Pressable onPress={finishNote} hitSlop={10}>
+            <Text variant="bodyMedium" tone={hasText ? 'ink' : 'muted'}>
+              {hasText ? 'zapisz' : 'pomiń'}
+            </Text>
+          </Pressable>
+        </View>
 
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 24, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="flex-row items-start gap-4 mb-10">
-            <View style={{ width: 64, height: 64 }}>
-              <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={64} dnaSeed={dnaSeed} />
-            </View>
-            <View className="flex-1">
-              <Text variant="eyebrow">DZIENNIK</Text>
-              <Text variant="h2" className="mt-2">
-                {notePrompt}
-              </Text>
-            </View>
+          <View
+            style={{
+              minHeight: composerPaperHeight,
+              backgroundColor: '#FBFAF1',
+              borderRadius: 16,
+              paddingHorizontal: 18,
+              paddingTop: 12,
+              paddingBottom: 12,
+              overflow: 'hidden',
+            }}
+          >
+            <PaperLines height={composerPaperHeight} />
+            <TextInput
+              ref={noteInputRef}
+              value={noteText}
+              onChangeText={setNoteText}
+              onContentSizeChange={(e) => setComposerHeight(e.nativeEvent.contentSize.height)}
+              placeholder={notePrompt}
+              placeholderTextColor="#7A6F6260"
+              multiline
+              textAlignVertical="top"
+              autoFocus
+              className="font-serif text-ink"
+              style={{ fontSize: 17, lineHeight: LINE_HEIGHT, padding: 0, margin: 0, outlineStyle: 'none' } as any}
+            />
           </View>
-
-          <TextInput
-            value={noteText}
-            onChangeText={setNoteText}
-            placeholder="pisz…"
-            placeholderTextColor="#7A6F6260"
-            multiline
-            textAlignVertical="top"
-            className="font-serif text-ink"
-            style={{ minHeight: 280, fontSize: 18, lineHeight: 28 }}
-          />
         </ScrollView>
-
-        <View className="px-6 pb-8">
-          <Button variant="pill" label="zapisz dzień" onPress={finishNote} />
-        </View>
       </SafeAreaView>
     );
   }
