@@ -2,9 +2,9 @@
 // Renderowane jako SVG overlay — niezależne od Skia.
 
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
-import { AXES } from '../lib/flower/types';
+import { Pressable, Text as RNText, View } from 'react-native';
+import Svg, { Circle, G, Line, Path } from 'react-native-svg';
+import { AXES, type Axis } from '../lib/flower/types';
 
 const LABELS: Record<(typeof AXES)[number], string> = {
   day: 'DZIEŃ',
@@ -27,6 +27,8 @@ type Props = {
   revealDelayMs?: number;
   /** Czas fade-in legendy. Domyślnie 900ms. */
   revealDurationMs?: number;
+  /** Gdy podane, etykiety osi są klikalne (edycja pojedynczej osi). */
+  onAxisPress?: (axis: Axis) => void;
 };
 
 function useFadeIn(delayMs: number, durationMs: number, key: string | undefined): number {
@@ -68,6 +70,7 @@ export function FlowerChrome({
   revealKey,
   revealDelayMs = 1500,
   revealDurationMs = 900,
+  onAxisPress,
 }: Props) {
   const reveal = useFadeIn(revealDelayMs, revealDurationMs, revealKey);
   const outer = size + pad * 2;
@@ -86,10 +89,11 @@ export function FlowerChrome({
         width: outer,
         height: outer,
         opacity: reveal,
-        pointerEvents: 'none',
+        // box-none — kontener nie łapie eventów, ale etykiety (Pressable) tak.
+        pointerEvents: onAxisPress ? 'box-none' : 'none',
       }}
     >
-      <Svg width={outer} height={outer}>
+      <Svg width={outer} height={outer} pointerEvents="none">
         {showGrid && (
           <G opacity={0.18}>
             {/* Pierścienie skali 1–5 */}
@@ -127,30 +131,50 @@ export function FlowerChrome({
             })}
           </G>
         )}
+      </Svg>
 
-        {/* Etykiety osi tuż za końcem promienia */}
-        {AXES.map((axis, i) => {
-          const deg = i * 60 + rotationOffset;
-          const rad = (deg * Math.PI) / 180;
-          const labelR = baseR + 18;
-          const x = cx + labelR * Math.sin(rad);
-          const y = cy - labelR * Math.cos(rad);
-          return (
-            <SvgText
-              key={`label-${i}`}
-              x={x}
-              y={y + 4}
-              fill="#7A6F62"
-              fontSize={10}
-              fontFamily="Inter_500Medium"
-              textAnchor="middle"
-              letterSpacing={1.6}
+      {/* Etykiety jako natywne Pressable — żeby klik per oś działał na web i iOS.
+          Pozycja liczona z kąta osi, identycznie jak wcześniej w SvgText. */}
+      {AXES.map((axis, i) => {
+        const deg = i * 60 + rotationOffset;
+        const rad = (deg * Math.PI) / 180;
+        const labelR = baseR + 18;
+        const x = cx + labelR * Math.sin(rad);
+        const y = cy - labelR * Math.cos(rad);
+        const labelW = 90;
+        const labelH = 28;
+        const handlePress = onAxisPress ? () => onAxisPress(axis) : undefined;
+        return (
+          <Pressable
+            key={`label-${i}`}
+            onPress={handlePress}
+            disabled={!handlePress}
+            accessibilityRole={handlePress ? 'button' : undefined}
+            accessibilityLabel={handlePress ? `edytuj ${LABELS[axis]}` : undefined}
+            style={{
+              position: 'absolute',
+              left: x - labelW / 2,
+              top: y - labelH / 2,
+              width: labelW,
+              height: labelH,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <RNText
+              style={{
+                color: '#7A6F62',
+                fontSize: 10,
+                fontFamily: 'Inter_500Medium',
+                letterSpacing: 1.6,
+                textAlign: 'center',
+              }}
             >
               {LABELS[axis]}
-            </SvgText>
-          );
-        })}
-      </Svg>
+            </RNText>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

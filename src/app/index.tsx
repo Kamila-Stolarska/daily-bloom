@@ -5,7 +5,8 @@ import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { entryToDayData, notesLength, todayIso, useStore } from '../lib/store';
-import type { DayData } from '../lib/flower/types';
+import type { Axis, DayData, Scale } from '../lib/flower/types';
+import { AxisEditSheet } from '../components/AxisEditSheet';
 
 // Outline-placeholder: maksymalne wartości żeby kwiatek wypełnił pełną przestrzeń.
 const NEUTRAL_DAY: DayData = {
@@ -65,8 +66,11 @@ export default function Home() {
     if (hydrated && !name) router.replace('/onboarding');
   }, [hydrated, name]);
 
+  const saveEntry = useStore((s) => s.saveEntry);
+
   const today = todayIso();
   const [selectedDate, setSelectedDate] = useState(today);
+  const [editingAxis, setEditingAxis] = useState<Axis | null>(null);
 
   const selectedEntry = entries[selectedDate];
   const selectedNotes = notesByDate[selectedDate] ?? [];
@@ -164,66 +168,76 @@ export default function Home() {
           }}
         >
           {flowerSize > 0 && (
-            <Pressable
-              onPress={() => openEntry(selectedDate)}
-              accessibilityRole="button"
-              accessibilityLabel={selectedEntry ? 'edytuj wpis dnia' : 'zapisz dzień'}
-              style={{ width: flowerSize, height: flowerSize }}
-              className="items-center justify-center"
-            >
-              {selectedEntry ? (
-                <View style={{ width: flowerSize, height: flowerSize }} className="items-center justify-center">
-                  <FlowerLazy
-                    dna={dna}
-                    day={entryToDayData(selectedEntry, notesLength(selectedNotes))}
-                    size={flowerSize}
-                    dnaSeed={dnaSeed}
-                    grain={false}
-                  />
-                  <FlowerChrome
-                    size={flowerSize}
-                    rotationOffset={dna.rotationOffset}
-                    showGrid
-                    pad={CHROME_PAD}
-                    revealKey={selectedDate}
-                  />
-                  <View
-                    style={{
-                      position: 'absolute',
-                      width: flowerSize * 0.34,
-                      height: flowerSize * 0.34,
-                    }}
-                    className="items-center justify-center"
-                  >
-                    <Text variant="caption" className="text-center" style={{ color: '#161311' }}>
-                      {'dotknij,\nby edytować'}
-                    </Text>
-                  </View>
+            selectedEntry ? (
+              // Z wpisem: kontener NIE jest klikalny (żeby nie zagnieżdżać przycisków).
+              // Etykiety osi (FlowerChrome) → edycja jednej osi.
+              // Środek "dotknij, by edytować" → pełna edycja.
+              <View
+                style={{ width: flowerSize, height: flowerSize }}
+                className="items-center justify-center"
+              >
+                <FlowerLazy
+                  dna={dna}
+                  day={entryToDayData(selectedEntry, notesLength(selectedNotes))}
+                  size={flowerSize}
+                  dnaSeed={dnaSeed}
+                  grain={false}
+                />
+                <FlowerChrome
+                  size={flowerSize}
+                  rotationOffset={dna.rotationOffset}
+                  showGrid
+                  pad={CHROME_PAD}
+                  revealKey={selectedDate}
+                  onAxisPress={(axis) => setEditingAxis(axis)}
+                />
+                <Pressable
+                  onPress={() => openEntry(selectedDate)}
+                  accessibilityRole="button"
+                  accessibilityLabel="edytuj wpis dnia"
+                  style={{
+                    position: 'absolute',
+                    width: flowerSize * 0.34,
+                    height: flowerSize * 0.34,
+                    borderRadius: flowerSize * 0.17,
+                  }}
+                  className="items-center justify-center"
+                >
+                  <Text variant="caption" className="text-center" style={{ color: '#161311' }}>
+                    {'dotknij,\nby edytować'}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              // Pusty dzień: cały kwiatek klikalny → otwiera pełen flow.
+              <Pressable
+                onPress={() => openEntry(selectedDate)}
+                accessibilityRole="button"
+                accessibilityLabel="zapisz dzień"
+                style={{ width: flowerSize, height: flowerSize }}
+                className="items-center justify-center"
+              >
+                <FlowerLazy
+                  dna={dna}
+                  day={{ ...NEUTRAL_DAY, dateIso: selectedDate }}
+                  size={flowerSize}
+                  dnaSeed={dnaSeed}
+                  outline
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    width: flowerSize * 0.34,
+                    height: flowerSize * 0.34,
+                  }}
+                  className="rounded-full items-center justify-center"
+                >
+                  <Text variant="caption" tone="muted" className="text-center">
+                    {isToday ? 'jeszcze\nnie zakwitł' : 'brak wpisu\ndotknij, by dodać'}
+                  </Text>
                 </View>
-              ) : (
-                <View style={{ width: flowerSize, height: flowerSize }} className="items-center justify-center">
-                  <FlowerLazy
-                    dna={dna}
-                    day={{ ...NEUTRAL_DAY, dateIso: selectedDate }}
-                    size={flowerSize}
-                    dnaSeed={dnaSeed}
-                    outline
-                  />
-                  <View
-                    style={{
-                      position: 'absolute',
-                      width: flowerSize * 0.34,
-                      height: flowerSize * 0.34,
-                    }}
-                    className="rounded-full items-center justify-center"
-                  >
-                    <Text variant="caption" tone="muted" className="text-center">
-                      {isToday ? 'jeszcze\nnie zakwitł' : 'brak wpisu\ndotknij, by dodać'}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </Pressable>
+              </Pressable>
+            )
           )}
         </View>
 
@@ -325,6 +339,17 @@ export default function Home() {
           </View>
         )}
       </ScrollView>
+
+      <AxisEditSheet
+        axis={editingAxis}
+        currentValue={editingAxis && selectedEntry ? (selectedEntry[editingAxis] as Scale) : undefined}
+        onSelect={async (axis, value) => {
+          if (!selectedEntry) return;
+          await saveEntry({ ...selectedEntry, [axis]: value });
+          setEditingAxis(null);
+        }}
+        onClose={() => setEditingAxis(null)}
+      />
     </SafeAreaView>
   );
 }

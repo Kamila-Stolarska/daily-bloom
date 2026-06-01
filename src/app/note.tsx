@@ -1,13 +1,15 @@
 // Notatki dnia — niezależne od kwestionariusza. Wiele notatek na dzień.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Svg, { Line, Path } from 'react-native-svg';
 import { todayIso, useStore } from '../lib/store';
 import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
+import { NoteEditor, type NoteEditorHandle } from '../components/note/NoteEditor';
+import { NoteEditorToolbar } from '../components/note/NoteEditorToolbar';
 
 const LINE_HEIGHT = 32;
 
@@ -73,7 +75,9 @@ export default function NoteScreen() {
 
   const [text, setText] = useState(editingNote?.text ?? '');
   const [composerHeight, setComposerHeight] = useState(LINE_HEIGHT * 6);
-  const inputRef = useRef<TextInput>(null);
+  const editorRef = useRef<NoteEditorHandle | null>(null);
+  // Force re-render toolbara, gdy instancja Tiptap (na webie) zostanie zainicjalizowana.
+  const [, forceTick] = useState(0);
   const prefilledRef = useRef(false);
 
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function NoteScreen() {
   }, [editingNote]);
 
   useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    const t = setTimeout(() => editorRef.current?.focus(), 100);
     return () => clearTimeout(t);
   }, []);
 
@@ -100,7 +104,7 @@ export default function NoteScreen() {
     }
     await addNote(today, trimmed);
     setText('');
-    inputRef.current?.focus();
+    editorRef.current?.focus();
   }
 
   if (!hydrated) {
@@ -139,6 +143,12 @@ export default function NoteScreen() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Toolbar — formatowanie (web) + mikrofon (dyktowanie do Groq Whisper) */}
+        <NoteEditorToolbar
+          editor={editorRef.current?.getEditor() ?? null}
+          onTranscribed={(t) => editorRef.current?.insertAtCursor(t)}
+        />
+
         {/* Composer */}
         <View
           style={{
@@ -153,17 +163,19 @@ export default function NoteScreen() {
           }}
         >
           <PaperLines height={composerPaperHeight} />
-          <TextInput
-            ref={inputRef}
+          <NoteEditor
+            ref={(handle) => {
+              editorRef.current = handle;
+              // Po pierwszym mount edytor Tiptap nie jest jeszcze gotowy — odświeżamy
+              // toolbar w next frame, żeby dostał instancję do bold/italic/list.
+              if (handle) requestAnimationFrame(() => forceTick((n) => n + 1));
+            }}
             value={text}
-            onChangeText={setText}
-            onContentSizeChange={(e) => setComposerHeight(e.nativeEvent.contentSize.height)}
+            onChange={setText}
+            onContentSizeChange={setComposerHeight}
             placeholder="zapisz, co Ci dziś chodzi po głowie…"
-            placeholderTextColor="#7A6F6260"
-            multiline
-            textAlignVertical="top"
-            className="font-serif text-ink"
-            style={{ fontSize: 17, lineHeight: LINE_HEIGHT, padding: 0, margin: 0, outlineStyle: 'none' } as any}
+            lineHeight={LINE_HEIGHT}
+            autoFocus
           />
         </View>
 

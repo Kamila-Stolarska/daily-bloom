@@ -1,7 +1,7 @@
 // Kwestionariusz dnia — używa Button/Text z ui/.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -12,6 +12,8 @@ import { deriveDna } from '../lib/flower/dna';
 import { FlowerLazy } from '../components/FlowerLazy';
 import { Button } from '../components/ui/button';
 import { Text } from '../components/ui/text';
+import { NoteEditor, type NoteEditorHandle } from '../components/note/NoteEditor';
+import { NoteEditorToolbar } from '../components/note/NoteEditorToolbar';
 
 type Draft = Partial<Record<(typeof AXIS_QUESTIONS)[number]['axis'], Scale>> & {
   somethingGood?: boolean;
@@ -140,7 +142,9 @@ export default function EntryScreen() {
   const [savedEntry, setSavedEntry] = useState<Entry | null>(null);
   const [noteText, setNoteText] = useState('');
   const [composerHeight, setComposerHeight] = useState(LINE_HEIGHT * 6);
-  const noteInputRef = useRef<TextInput>(null);
+  const noteEditorRef = useRef<NoteEditorHandle | null>(null);
+  // Force re-render toolbara, gdy edytor Tiptap się zainicjalizuje / zmieni stan formatowania.
+  const [, forceTick] = useState(0);
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -320,6 +324,15 @@ export default function EntryScreen() {
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
+          <NoteEditorToolbar
+            editor={noteEditorRef.current?.getEditor() ?? null}
+            onTranscribed={(text) => {
+              noteEditorRef.current?.insertAtCursor(text);
+              // Po wstawieniu odśwież lokalny `noteText` z edytora — `onChange`
+              // edytora i tak to zrobi, ale na natywne robimy to przez ref.
+            }}
+          />
+
           <View
             style={{
               minHeight: composerPaperHeight,
@@ -333,18 +346,19 @@ export default function EntryScreen() {
             }}
           >
             <PaperLines height={composerPaperHeight} />
-            <TextInput
-              ref={noteInputRef}
+            <NoteEditor
+              ref={(handle) => {
+                noteEditorRef.current = handle;
+                // Po pierwszym mount edytor Tiptap nie jest jeszcze gotowy — wymuszamy
+                // re-render w next tick, żeby toolbar dostał instancję.
+                if (handle) requestAnimationFrame(() => forceTick((n) => n + 1));
+              }}
               value={noteText}
-              onChangeText={setNoteText}
-              onContentSizeChange={(e) => setComposerHeight(e.nativeEvent.contentSize.height)}
+              onChange={setNoteText}
+              onContentSizeChange={setComposerHeight}
               placeholder={notePrompt}
-              placeholderTextColor="#7A6F6260"
-              multiline
-              textAlignVertical="top"
+              lineHeight={LINE_HEIGHT}
               autoFocus
-              className="font-serif text-ink"
-              style={{ fontSize: 17, lineHeight: LINE_HEIGHT, padding: 0, margin: 0, outlineStyle: 'none' } as any}
             />
           </View>
 
