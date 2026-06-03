@@ -11,7 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Text } from '../components/ui/text';
 import { MessageBubble } from '../components/chat/MessageBubble';
-import { StreamingDot } from '../components/chat/StreamingDot';
+import { ThinkingFlower } from '../components/chat/ThinkingFlower';
 import { useChat } from '../lib/chat/useChat';
 import { DictateButton } from '../components/note/DictateButton';
 
@@ -134,7 +134,7 @@ export default function ChatScreen() {
             <MessageBubble key={m.id} role={m.role === 'system' ? 'assistant' : m.role} content={m.content} />
           ))}
 
-          {streaming && messages[messages.length - 1]?.content === '' && <StreamingDot />}
+          {streaming && messages[messages.length - 1]?.content === '' && <ThinkingFlower />}
 
           {error && (
             <View className="mt-2 mb-2 px-3 py-2" style={{ backgroundColor: '#F4E2D8', borderRadius: 12 }}>
