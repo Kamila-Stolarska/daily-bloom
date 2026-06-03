@@ -22,8 +22,7 @@ export function MessageBubble({ role, content }: Props) {
         <Text
           variant="body"
           tone="ink"
-          className="font-serif"
-          style={{ fontSize: 17, lineHeight: 25, letterSpacing: -0.2 }}
+          style={{ fontSize: 15, lineHeight: 22 }}
         >
           {content || ' '}
         </Text>

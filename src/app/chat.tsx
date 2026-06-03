@@ -95,11 +95,38 @@ export default function ChatScreen() {
               <Text
                 variant="caption"
                 tone="muted"
-                className="text-center mt-4"
+                className="text-center mt-4 mb-6"
                 style={{ fontSize: 14, lineHeight: 20, maxWidth: 280 }}
               >
                 Czytam Twoje wpisy i notatki z ostatnich dni. Pisz albo przytrzymaj mikrofon.
               </Text>
+              <View style={{ gap: 8, width: '100%', maxWidth: 320 }}>
+                {[
+                  'Jak wyglądał mój ostatni tydzień?',
+                  'Co mi pomaga gdy mam gorszy dzień?',
+                  'Co zauważasz w moich notatkach?',
+                ].map((q) => (
+                  <Pressable
+                    key={q}
+                    onPress={() => {
+                      if (streaming) return;
+                      void send(q);
+                    }}
+                    style={{
+                      backgroundColor: '#FBFAF1',
+                      borderColor: '#E1D8CE',
+                      borderWidth: 1,
+                      borderRadius: 18,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                    }}
+                  >
+                    <Text variant="body" tone="ink" style={{ fontSize: 14, lineHeight: 20 }}>
+                      {q}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
           )}
 
