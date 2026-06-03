@@ -62,10 +62,6 @@ export default function Home() {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
-  useEffect(() => {
-    if (hydrated && !name) router.replace('/onboarding');
-  }, [hydrated, name]);
-
   const saveEntry = useStore((s) => s.saveEntry);
 
   const today = todayIso();

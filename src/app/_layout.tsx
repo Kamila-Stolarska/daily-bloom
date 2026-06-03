@@ -1,4 +1,5 @@
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import {
   LibreBodoni_400Regular,
@@ -13,6 +14,35 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 
 import '../global.css';
+import { useStore } from '../lib/store';
+
+function AuthGate() {
+  const router = useRouter();
+  const segments = useSegments();
+  const hydrated = useStore((s) => s.hydrated);
+  const authed = useStore((s) => s.authed);
+  const name = useStore((s) => s.name);
+  const hydrate = useStore((s) => s.hydrate);
+
+  useEffect(() => {
+    if (!hydrated) void hydrate();
+  }, [hydrated, hydrate]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const onAuth = segments[0] === 'auth';
+    const onOnboarding = segments[0] === 'onboarding';
+    if (!authed) {
+      if (!onAuth) router.replace('/auth');
+    } else if (!name) {
+      if (!onOnboarding) router.replace('/onboarding');
+    } else if (onAuth || onOnboarding) {
+      router.replace('/');
+    }
+  }, [hydrated, authed, name, segments, router]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -33,6 +63,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
+      <AuthGate />
       <Stack
         screenOptions={{
           headerShown: false,

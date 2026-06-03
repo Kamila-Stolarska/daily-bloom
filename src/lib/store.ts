@@ -1,10 +1,20 @@
-// Stan aplikacji: imię + wpisy dziennika + notatki. Persist do AsyncStorage (na web: localStorage).
+// Stan aplikacji: imię + wpisy + notatki. Źródło prawdy = Supabase.
+// Lokalny AsyncStorage trzyma snapshot do offline read (szybki paint).
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DayData, Scale } from './flower/types';
+import { supabase } from './supabase';
+import { listEntries, upsertEntry } from './db/entries';
+import {
+  listNotesByDate,
+  addNote as dbAddNote,
+  updateNote as dbUpdateNote,
+  deleteNote as dbDeleteNote,
+} from './db/notes';
+import { getOrCreateProfile, setProfileName } from './db/profile';
 
 export type Entry = {
-  dateIso: string; // YYYY-MM-DD
+  dateIso: string;
   day: Scale;
   emotions: Scale;
   energy: Scale;
@@ -24,9 +34,10 @@ export type Note = {
 
 type State = {
   hydrated: boolean;
+  authed: boolean;
   name: string | null;
-  userId: string; // do DNA seed
-  entries: Record<string, Entry>; // klucz = dateIso
+  userId: string;
+  entries: Record<string, Entry>;
   notesByDate: Record<string, Note[]>;
   setName: (name: string) => Promise<void>;
   saveEntry: (entry: Entry) => Promise<void>;
@@ -34,128 +45,229 @@ type State = {
   updateNote: (dateIso: string, id: string, text: string) => Promise<void>;
   deleteNote: (dateIso: string, id: string) => Promise<void>;
   hydrate: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
-const KEY = 'daily-bloom:v1';
+const CACHE_KEY_PREFIX = 'daily-bloom:cache:';
+const LEGACY_KEY = 'daily-bloom:v1';
+const MIGRATED_FLAG_PREFIX = 'daily-bloom:migrated:';
+
+type CacheBlob = {
+  name: string | null;
+  userId: string;
+  entries: Record<string, Entry>;
+  notesByDate: Record<string, Note[]>;
+};
 
 type LegacyEntry = Entry & { note?: string };
-
-type Persisted = {
+type LegacyBlob = {
   name: string | null;
   userId: string;
   entries: Record<string, LegacyEntry>;
   notesByDate?: Record<string, Note[]>;
 };
 
-async function loadPersisted(): Promise<Persisted | null> {
+async function loadCache(userId: string): Promise<CacheBlob | null> {
   try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as Persisted;
+    const raw = await AsyncStorage.getItem(CACHE_KEY_PREFIX + userId);
+    return raw ? (JSON.parse(raw) as CacheBlob) : null;
   } catch {
     return null;
   }
 }
 
-async function savePersisted(p: {
-  name: string | null;
-  userId: string;
-  entries: Record<string, Entry>;
-  notesByDate: Record<string, Note[]>;
-}) {
-  await AsyncStorage.setItem(KEY, JSON.stringify(p));
+async function saveCache(c: CacheBlob): Promise<void> {
+  await AsyncStorage.setItem(CACHE_KEY_PREFIX + c.userId, JSON.stringify(c));
 }
 
-function genUserId(): string {
-  return `u_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+async function loadLegacy(): Promise<LegacyBlob | null> {
+  try {
+    const raw = await AsyncStorage.getItem(LEGACY_KEY);
+    return raw ? (JSON.parse(raw) as LegacyBlob) : null;
+  } catch {
+    return null;
+  }
 }
 
 function genNoteId(): string {
   return `n_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
-function migrate(p: Persisted): {
-  entries: Record<string, Entry>;
-  notesByDate: Record<string, Note[]>;
-} {
-  const notesByDate: Record<string, Note[]> = { ...(p.notesByDate ?? {}) };
-  const entries: Record<string, Entry> = {};
-  for (const [dateIso, legacy] of Object.entries(p.entries ?? {})) {
-    const { note, ...rest } = legacy;
-    entries[dateIso] = rest;
-    if (note && note.trim() && !notesByDate[dateIso]?.length) {
-      notesByDate[dateIso] = [
-        { id: genNoteId(), text: note, createdAtIso: legacy.createdAtIso },
-      ];
+// Jednorazowy upload lokalnych danych z `daily-bloom:v1` do Supabase.
+// Uruchamiany przy pierwszym zalogowaniu — jeżeli zdalne tabele dla tego usera są puste.
+async function migrateLegacyIfNeeded(userId: string): Promise<void> {
+  const flagKey = MIGRATED_FLAG_PREFIX + userId;
+  const done = await AsyncStorage.getItem(flagKey);
+  if (done) return;
+  const legacy = await loadLegacy();
+  if (!legacy) {
+    await AsyncStorage.setItem(flagKey, '1');
+    return;
+  }
+  // Czy w Supabase jest już cokolwiek?
+  const [{ count: entryCount }, { count: noteCount }] = await Promise.all([
+    supabase.from('entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('notes').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+  ]);
+  if ((entryCount ?? 0) > 0 || (noteCount ?? 0) > 0) {
+    await AsyncStorage.setItem(flagKey, '1');
+    return;
+  }
+  // Upload wpisów (strip legacy `note` field jeśli istnieje).
+  const entries = Object.values(legacy.entries ?? {});
+  for (const e of entries) {
+    const { note, ...rest } = e as LegacyEntry;
+    await upsertEntry(userId, rest);
+    if (note && note.trim()) {
+      await dbAddNote(userId, rest.dateIso, note);
     }
   }
-  return { entries, notesByDate };
+  // Upload notatek.
+  const notes = Object.entries(legacy.notesByDate ?? {});
+  for (const [dateIso, list] of notes) {
+    for (const n of list) await dbAddNote(userId, dateIso, n.text);
+  }
+  await AsyncStorage.setItem(flagKey, '1');
 }
 
 export const useStore = create<State>((set, get) => ({
   hydrated: false,
+  authed: false,
   name: null,
   userId: '',
   entries: {},
   notesByDate: {},
+
   hydrate: async () => {
-    const p = await loadPersisted();
-    if (p) {
-      const { entries, notesByDate } = migrate(p);
-      set({ name: p.name, userId: p.userId, entries, notesByDate, hydrated: true });
-      await savePersisted({ name: p.name, userId: p.userId, entries, notesByDate });
-    } else {
-      const userId = genUserId();
-      set({ name: null, userId, entries: {}, notesByDate: {}, hydrated: true });
-      await savePersisted({ name: null, userId, entries: {}, notesByDate: {} });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
+    if (!session) {
+      set({ hydrated: true, authed: false, name: null, userId: '', entries: {}, notesByDate: {} });
+      return;
     }
+    const authUserId = session.user.id;
+
+    // 1) Szybki paint z cache.
+    const cached = await loadCache(authUserId);
+    if (cached) {
+      set({
+        hydrated: true,
+        authed: true,
+        name: cached.name,
+        userId: cached.userId,
+        entries: cached.entries,
+        notesByDate: cached.notesByDate,
+      });
+    }
+
+    // 2) Profile + ew. migracja legacy.
+    const legacy = await loadLegacy();
+    const profile = await getOrCreateProfile(authUserId, legacy?.userId);
+    await migrateLegacyIfNeeded(authUserId);
+
+    // 3) Świeży fetch z Supabase.
+    const [entries, notesByDate] = await Promise.all([
+      listEntries(authUserId),
+      listNotesByDate(authUserId),
+    ]);
+    set({
+      hydrated: true,
+      authed: true,
+      name: profile.name,
+      userId: profile.flowerSeed,
+      entries,
+      notesByDate,
+    });
+    await saveCache({
+      name: profile.name,
+      userId: profile.flowerSeed,
+      entries,
+      notesByDate,
+    });
   },
+
   setName: async (name) => {
-    const { userId, entries, notesByDate } = get();
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
     const trimmed = name.trim();
     const normalized = trimmed
       ? trimmed.charAt(0).toLocaleUpperCase('pl-PL') + trimmed.slice(1)
       : trimmed;
+    await setProfileName(session.user.id, normalized);
     set({ name: normalized });
-    await savePersisted({ name: normalized, userId, entries, notesByDate });
+    const { userId, entries, notesByDate } = get();
+    await saveCache({ name: normalized, userId, entries, notesByDate });
   },
+
   saveEntry: async (entry) => {
-    const { name, userId, entries, notesByDate } = get();
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
+    await upsertEntry(session.user.id, entry);
+    const { entries, notesByDate, name, userId } = get();
     const next = { ...entries, [entry.dateIso]: entry };
     set({ entries: next });
-    await savePersisted({ name, userId, entries: next, notesByDate });
+    await saveCache({ name, userId, entries: next, notesByDate });
   },
+
   addNote: async (dateIso, text) => {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
     const trimmed = text.trim();
     if (!trimmed) throw new Error('empty note');
-    const { name, userId, entries, notesByDate } = get();
-    const note: Note = { id: genNoteId(), text: trimmed, createdAtIso: new Date().toISOString() };
-    const list = notesByDate[dateIso] ?? [];
-    const nextNotes = { ...notesByDate, [dateIso]: [...list, note] };
-    set({ notesByDate: nextNotes });
-    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
+    let note: Note;
+    try {
+      note = await dbAddNote(session.user.id, dateIso, trimmed);
+    } catch (e) {
+      // Optymistycznie — jakby sieci brak, zapisujemy lokalnie z tymczasowym id.
+      note = { id: genNoteId(), text: trimmed, createdAtIso: new Date().toISOString() };
+      throw e;
+    } finally {
+      const { notesByDate, entries, name, userId } = get();
+      const list = notesByDate[dateIso] ?? [];
+      const nextNotes = { ...notesByDate, [dateIso]: [...list, note!] };
+      set({ notesByDate: nextNotes });
+      await saveCache({ name, userId, entries, notesByDate: nextNotes });
+    }
     return note;
   },
+
   updateNote: async (dateIso, id, text) => {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
     const trimmed = text.trim();
     if (!trimmed) throw new Error('empty note');
-    const { name, userId, entries, notesByDate } = get();
+    await dbUpdateNote(session.user.id, id, trimmed);
+    const { notesByDate, entries, name, userId } = get();
     const list = notesByDate[dateIso] ?? [];
     const next = list.map((n) => (n.id === id ? { ...n, text: trimmed } : n));
     const nextNotes = { ...notesByDate, [dateIso]: next };
     set({ notesByDate: nextNotes });
-    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
+    await saveCache({ name, userId, entries, notesByDate: nextNotes });
   },
+
   deleteNote: async (dateIso, id) => {
-    const { name, userId, entries, notesByDate } = get();
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
+    await dbDeleteNote(session.user.id, id);
+    const { notesByDate, entries, name, userId } = get();
     const list = (notesByDate[dateIso] ?? []).filter((n) => n.id !== id);
     const nextNotes = { ...notesByDate };
     if (list.length) nextNotes[dateIso] = list;
     else delete nextNotes[dateIso];
     set({ notesByDate: nextNotes });
-    await savePersisted({ name, userId, entries, notesByDate: nextNotes });
+    await saveCache({ name, userId, entries, notesByDate: nextNotes });
+  },
+
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ authed: false, name: null, userId: '', entries: {}, notesByDate: {} });
   },
 }));
+
+// Reaguj na zmiany sesji (login z drugiej karty, sign-out itp.).
+supabase.auth.onAuthStateChange((_event, _session) => {
+  void useStore.getState().hydrate();
+});
 
 export function todayIso(): string {
   const d = new Date();
