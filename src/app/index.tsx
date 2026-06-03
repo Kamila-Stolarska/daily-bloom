@@ -19,6 +19,7 @@ import { FlowerLazy } from '../components/FlowerLazy';
 import { FlowerChrome } from '../components/FlowerChrome';
 import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
+import { ChatBar } from '../components/chat/ChatBar';
 
 function greeting(name: string): string {
   const h = new Date().getHours();
@@ -91,7 +92,8 @@ export default function Home() {
   const headlineLh = Math.round(headlineSize * 1.04);
   const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
   const topPad = tight ? 8 : roomy ? 24 : 16;
-  const bottomPad = tight ? 8 : 16;
+  // Dodatkowy zapas pod pływający ChatBar (≈68px wysokości baru + safe area).
+  const bottomPad = (tight ? 8 : 16) + 84;
   const heroGap = tight ? 16 : roomy ? 32 : 24;
 
   // Kwiatek + miejsce na etykiety legendy (~40px po każdej stronie).
@@ -346,6 +348,8 @@ export default function Home() {
         }}
         onClose={() => setEditingAxis(null)}
       />
+
+      <ChatBar />
     </SafeAreaView>
   );
 }
