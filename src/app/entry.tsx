@@ -1,7 +1,16 @@
 // Kwestionariusz dnia — używa Button/Text z ui/.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, ScrollView, View } from 'react-native';
+import Animated, {
+  Easing,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,6 +19,7 @@ import { Scale } from '../lib/flower/types';
 import { Entry, entryToDayData, todayIso, useStore } from '../lib/store';
 import { deriveDna } from '../lib/flower/dna';
 import { FlowerLazy } from '../components/FlowerLazy';
+import { FlowerChrome } from '../components/FlowerChrome';
 import { Button } from '../components/ui/button';
 import { Text } from '../components/ui/text';
 import { NoteEditor, type NoteEditorHandle } from '../components/note/NoteEditor';
@@ -69,25 +79,53 @@ function IntensityDots({ value, selected }: { value: number; selected: boolean }
   const width = total * dotSize + (total - 1) * gap;
   const filled = selected ? '#F6F6EA' : '#1A1614';
   const muted = selected ? 'rgba(246,246,234,0.3)' : 'rgba(122,111,98,0.35)';
+  const pulse = useSharedValue(1);
+  const wasSelected = useRef(selected);
+  useEffect(() => {
+    if (selected && !wasSelected.current) {
+      pulse.value = withSequence(
+        withTiming(1.18, { duration: 140, easing: Easing.out(Easing.quad) }),
+        withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) }),
+      );
+    }
+    wasSelected.current = selected;
+  }, [selected, pulse]);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   return (
-    <Svg width={width} height={dotSize}>
-      {Array.from({ length: total }).map((_, i) => {
-        const cx = i * (dotSize + gap) + dotSize / 2;
-        const on = i < value;
-        return (
-          <Circle
-            key={i}
-            cx={cx}
-            cy={dotSize / 2}
-            r={dotSize / 2}
-            fill={on ? filled : 'transparent'}
-            stroke={on ? filled : muted}
-            strokeWidth={1}
-          />
-        );
-      })}
-    </Svg>
+    <Animated.View style={animStyle}>
+      <Svg width={width} height={dotSize}>
+        {Array.from({ length: total }).map((_, i) => {
+          const cx = i * (dotSize + gap) + dotSize / 2;
+          const on = i < value;
+          return (
+            <Circle
+              key={i}
+              cx={cx}
+              cy={dotSize / 2}
+              r={dotSize / 2}
+              fill={on ? filled : 'transparent'}
+              stroke={on ? filled : muted}
+              strokeWidth={1}
+            />
+          );
+        })}
+      </Svg>
+    </Animated.View>
   );
+}
+
+function AxisContent({ children }: { children: React.ReactNode }) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(12);
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 320, easing: Easing.out(Easing.cubic) });
+    translateY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+  }, [opacity, translateY]);
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 function OptionRow({
@@ -101,23 +139,43 @@ function OptionRow({
   selected: boolean;
   onPress: () => void;
 }) {
+  const scale = useSharedValue(1);
+  const sel = useSharedValue(selected ? 1 : 0);
+  useEffect(() => {
+    sel.value = withTiming(selected ? 1 : 0, { duration: 240, easing: Easing.out(Easing.cubic) });
+  }, [selected, sel]);
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(sel.value, [0, 1], ['#F6F6EA', '#1A1614']),
+    borderColor: interpolateColor(sel.value, [0, 1], ['rgba(122,111,98,0.25)', '#1A1614']),
+  }));
   return (
-    <Pressable
-      onPress={onPress}
-      className={
-        'py-4 px-5 rounded-2xl border flex-row items-center justify-between ' +
-        (selected ? 'bg-ink border-ink' : 'bg-paper border-ink-muted/25')
-      }
+    <Animated.View
+      style={[
+        { borderWidth: 1, borderRadius: 16 },
+        containerStyle,
+      ]}
     >
-      <Text
-        variant="bodyMedium"
-        tone={selected ? 'paper' : 'ink'}
-        style={{ fontSize: 17, letterSpacing: -0.1 }}
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => {
+          scale.value = withTiming(0.97, { duration: 90, easing: Easing.out(Easing.quad) });
+        }}
+        onPressOut={() => {
+          scale.value = withTiming(1, { duration: 160, easing: Easing.out(Easing.quad) });
+        }}
+        className="py-4 px-5 flex-row items-center justify-between"
       >
-        {label}
-      </Text>
-      <IntensityDots value={index} selected={selected} />
-    </Pressable>
+        <Text
+          variant="bodyMedium"
+          tone={selected ? 'paper' : 'ink'}
+          style={{ fontSize: 17, letterSpacing: -0.1 }}
+        >
+          {label}
+        </Text>
+        <IntensityDots value={index} selected={selected} />
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -179,6 +237,9 @@ export default function EntryScreen() {
   );
 
   function selectAxis(axis: (typeof AXIS_QUESTIONS)[number]['axis'], v: Scale) {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync().catch(() => {});
+    }
     const newDraft = { ...draft, [axis]: v };
     setDraft(newDraft);
     if (step.kind !== 'axis') return;
@@ -250,30 +311,32 @@ export default function EntryScreen() {
         />
 
         <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 40, paddingBottom: 32 }}>
-          <Text variant="eyebrow">{q.axis.toUpperCase()}</Text>
-          <Text variant="h1" className="mt-4">
-            {q.prompt}
-          </Text>
-          {q.micro ? (
-            <Text variant="caption" tone="muted" className="mt-4">
-              {q.micro}
+          <AxisContent key={step.index}>
+            <Text variant="eyebrow">{q.axis.toUpperCase()}</Text>
+            <Text variant="h1" className="mt-4">
+              {q.prompt}
             </Text>
-          ) : null}
+            {q.micro ? (
+              <Text variant="caption" tone="muted" className="mt-4">
+                {q.micro}
+              </Text>
+            ) : null}
 
-          <View className="mt-10 gap-2.5">
-            {q.labels.map((label, i) => {
-              const v = (i + 1) as Scale;
-              return (
-                <OptionRow
-                  key={label}
-                  label={label}
-                  index={v}
-                  selected={value === v}
-                  onPress={() => selectAxis(q.axis, v)}
-                />
-              );
-            })}
-          </View>
+            <View className="mt-10 gap-2.5">
+              {q.labels.map((label, i) => {
+                const v = (i + 1) as Scale;
+                return (
+                  <OptionRow
+                    key={label}
+                    label={label}
+                    index={v}
+                    selected={value === v}
+                    onPress={() => selectAxis(q.axis, v)}
+                  />
+                );
+              })}
+            </View>
+          </AxisContent>
         </ScrollView>
       </SafeAreaView>
     );
@@ -285,7 +348,16 @@ export default function EntryScreen() {
       <SafeAreaView className="flex-1 bg-paper">
         <TopBar left={<Text variant="eyebrow">ZAKWITŁO</Text>} />
         <View className="flex-1 items-center justify-center px-6">
-          <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
+          <View style={{ width: 340, height: 340 }} className="items-center justify-center">
+            <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
+            <FlowerChrome
+              size={340}
+              rotationOffset={dna.rotationOffset}
+              showGrid
+              pad={40}
+              revealKey={savedEntry.date}
+            />
+          </View>
           <Text
             variant="h2"
             className="text-center mt-10"

@@ -80,7 +80,31 @@ export default function Home() {
     return Math.abs(h) || 1234567;
   }, [userId]);
 
-  const week = useMemo(() => currentWeekIso(), []);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const week = useMemo(() => {
+    const base = new Date();
+    base.setDate(base.getDate() + weekOffset * 7);
+    return currentWeekIso(base);
+  }, [weekOffset]);
+
+  // Jeśli wybrany dzień nie jest w widocznym tygodniu — zsynchronizuj.
+  useEffect(() => {
+    if (!week.includes(selectedDate)) {
+      setSelectedDate(week[6]); // niedziela widocznego tygodnia
+    }
+  }, [week, selectedDate]);
+
+  // Etykieta zakresu tygodnia "26 maja — 1 czerwca"
+  const weekRangeLabel = useMemo(() => {
+    const a = new Date(week[0] + 'T00:00:00');
+    const b = new Date(week[6] + 'T00:00:00');
+    const sameMonth = a.getMonth() === b.getMonth();
+    const aStr = sameMonth
+      ? `${a.getDate()}`
+      : `${a.getDate()} ${MONTHS_PL[a.getMonth()].toLowerCase()}`;
+    const bStr = `${b.getDate()} ${MONTHS_PL[b.getMonth()].toLowerCase()}`;
+    return `${aStr} — ${bStr}`;
+  }, [week]);
 
   const { width: winW, height: winH } = useWindowDimensions();
   const [flowerBox, setFlowerBox] = useState({ w: 0, h: 0 });
@@ -258,6 +282,49 @@ export default function Home() {
         <Text variant="bodyMedium" tone="ink" style={{ marginBottom: tight ? 8 : 12 }}>
           {formatDayLabel(selectedDate)}
         </Text>
+
+        {/* Nawigacja tygodnia — strzałki + zakres + skok do dziś */}
+        <View
+          className="flex-row items-center justify-between"
+          style={{ marginBottom: tight ? 6 : 10 }}
+        >
+          <Pressable
+            onPress={() => setWeekOffset((o) => o - 1)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="poprzedni tydzień"
+            style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+          >
+            <Text variant="body" tone="ink" style={{ fontSize: 20 }}>
+              ←
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setWeekOffset(0);
+              setSelectedDate(today);
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="skocz do dziś"
+          >
+            <Text variant="caption" tone="muted" style={{ letterSpacing: 0.5 }}>
+              {weekOffset === 0 ? 'TEN TYDZIEŃ' : weekRangeLabel}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setWeekOffset((o) => Math.min(0, o + 1))}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="następny tydzień"
+            disabled={weekOffset >= 0}
+            style={{ paddingHorizontal: 8, paddingVertical: 4, opacity: weekOffset >= 0 ? 0.3 : 1 }}
+          >
+            <Text variant="body" tone="ink" style={{ fontSize: 20 }}>
+              →
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Tydzień — klikalne dni z numerami */}
         <View className="flex-row justify-between">
