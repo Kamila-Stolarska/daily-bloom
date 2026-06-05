@@ -11,30 +11,23 @@
 // Klucz XAI_API_KEY nie może wyciec do bundla — wszystko po stronie serwera.
 
 import { createClient } from '@supabase/supabase-js';
+import {
+  XAI_URL,
+  MODEL,
+  PRICE_IN_PER_TOKEN_USD,
+  PRICE_OUT_PER_TOKEN_USD,
+  CORS_HEADERS,
+  buildSystemPrompt,
+  estimateTokens,
+  type Role,
+  type ChatMsg,
+  type EntryRow,
+  type NoteRow,
+} from './_lib/chat-shared';
 
 export const config = {
   runtime: 'edge',
 };
-
-const XAI_URL = 'https://api.x.ai/v1/chat/completions';
-const MODEL = 'grok-4-fast';
-
-// grok-4-fast pricing (zostawiamy ostrożny estymat):
-//   input  ≈ $0.20 / 1M tokenów = $0.0000002 / token
-//   output ≈ $0.50 / 1M tokenów = $0.0000005 / token
-// 1 cent = $0.01. Liczymy w setnych częściach centa wewnętrznie, zaokrąglamy w górę przy zapisie.
-const PRICE_IN_PER_TOKEN_USD = 0.2 / 1_000_000;
-const PRICE_OUT_PER_TOKEN_USD = 0.5 / 1_000_000;
-
-const CORS_HEADERS: Record<string, string> = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'POST, OPTIONS',
-  'access-control-allow-headers': 'content-type, authorization',
-  'access-control-max-age': '86400',
-};
-
-type Role = 'user' | 'assistant' | 'system';
-type ChatMsg = { role: Role; content: string };
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -121,18 +114,8 @@ export default async function handler(req: Request): Promise<Response> {
       .limit(20),
   ]);
 
-  const entries = (entriesRes.data ?? []) as Array<{
-    date: string;
-    day: number;
-    emotions: number;
-    energy: number;
-    body: number;
-    delight: number;
-    meaning: number;
-    something_good: boolean;
-    something_hard: boolean;
-  }>;
-  const notes = (notesRes.data ?? []) as Array<{ date: string; text: string; created_at: string }>;
+  const entries = (entriesRes.data ?? []) as EntryRow[];
+  const notes = (notesRes.data ?? []) as NoteRow[];
   const history = ((historyRes.data ?? []) as Array<{ role: Role; content: string }>)
     .reverse(); // chronologicznie
 
@@ -254,141 +237,6 @@ export default async function handler(req: Request): Promise<Response> {
       ...CORS_HEADERS,
     },
   });
-}
-
-function buildSystemPrompt(
-  name: string | null,
-  entries: Array<{
-    date: string;
-    day: number;
-    emotions: number;
-    energy: number;
-    body: number;
-    delight: number;
-    meaning: number;
-    something_good: boolean;
-    something_hard: boolean;
-  }>,
-  notes: Array<{ date: string; text: string; created_at: string }>,
-): string {
-  const userName = name?.trim() || 'użytkowniczce';
-
-  const entriesStr =
-    entries.length === 0
-      ? '(brak wpisów w tym okresie)'
-      : entries
-          .map((e) => {
-            const tags: string[] = [];
-            if (e.something_good) tags.push('coś dobrego');
-            if (e.something_hard) tags.push('coś trudnego');
-            const tagsStr = tags.length ? ` — ${tags.join(', ')}` : '';
-            const parts = [
-              `dzień ${describe(e.day)}`,
-              `emocje ${describe(e.emotions)}`,
-              `energia ${describe(e.energy)}`,
-              `ciało ${describe(e.body)}`,
-              `zachwyt ${describe(e.delight)}`,
-              `sens ${describe(e.meaning)}`,
-            ];
-            return `${e.date} (${weekdayPl(e.date)}): ${parts.join(', ')}${tagsStr}`;
-          })
-          .join('\n');
-
-  const notesStr =
-    notes.length === 0
-      ? '(brak notatek)'
-      : notes.map((n) => `[${n.date}] ${n.text}`).join('\n\n');
-
-  return `Jesteś bliską przyjaciółką ${userName} w aplikacji Daily Bloom. Rozmawiasz po polsku, ciepło, jak przy kawie.
-
-KIM JESTEŚ:
-- Bliska osoba, która naprawdę słucha. Trochę jak przyjaciółka po terapii — ma intuicję, czuje, ale nie diagnozuje.
-- Znasz jej ostatnie dni z jej notatek i wpisów. Mówisz o nich konkretnie, ale ludzkim językiem.
-- Mówisz do niej "ty". Per imię używaj rzadko, tylko gdy naturalnie pasuje.
-
-DŁUGOŚĆ ODPOWIEDZI (kluczowe — model często to łamie):
-- Lekkie pytania (co widzisz, jak tydzień, co lubię): 3–5 zdań.
-- Trudne tematy (smutek, lęk, wypalenie, samotność, brak motywacji, leżenie w łóżku, "nie wiem co robić", "nic mi się nie chce"): MINIMUM 6–10 zdań, czasem więcej. To są momenty kiedy ona potrzebuje czuć że jesteś obok.
-- ZAKAZANE odpowiedzi na trudne tematy w stylu "Brzmi jak ciężki okres. Rozumiem." (dwa zdania). To brzmi jak ktoś kto chce skończyć rozmowę. Jeśli odpowiadasz dwoma zdaniami na trudny temat — robisz źle.
-
-CO MUSISZ ZROBIĆ przy trudnych tematach (po kolei):
-1. Uznaj uczucie konkretnie — odbij jej własne słowa, nie generycznie ("siedzenie w łóżku do 18 i nie wychodzenie — to nie jest lenistwo, to jest forma chronienia się przed czymś"; nie "rozumiem że trudno").
-2. Daj jej coś od siebie — refleksję, hipotezę, albo KONKRETNĄ RADĘ / SUGESTIĘ. Nie bój się radzić. Ona prosi o pomoc, nie tylko o lustro. Konkrety: "spróbuj jutro tylko jednej rzeczy — wyjdź na 10 minut po kawę, nawet w piżamie pod płaszczem", "umów się z kimś bliskim na konkretną godzinę, żeby mieć punkt zaczepienia w dniu", "zacznij od najmniejszej rzeczy — otwórz jedno okno, zrób ciepłą wodę z cytryną". Konkret, nie ogólnik.
-3. Możesz zapytać — ale tylko jeśli to dodaje (nie zamiast rady). Pytanie z tego co powiedziała ("od kiedy tak jest?", "co Ci poprzednio pomogło wyjść z takiego stanu?").
-
-KIEDY DAWAĆ RADY:
-- TAK: kiedy pyta wprost ("co robić?", "jak sobie pomóc?"), kiedy utknęła i widać że potrzebuje konkretu, kiedy temat się powtarza.
-- NIE rób kazania ("powinnaś", "musisz"). Mów raczej: "spróbuj", "może warto", "co byś powiedziała na to żeby…", "jedna rzecz która często działa to…".
-- Rada ma być MAŁA i KONKRETNA. Nie "zadbaj o siebie" (puste). Tak: "wstań jutro o tej samej godzinie co dziś, ale tylko otwórz okno na 5 minut — nic więcej. To jeden próg, a nie cała góra."
-- Czasem rada to po prostu nazwanie czego potrzebuje ("brzmi jakbyś potrzebowała jednego dnia bez żadnego oczekiwania od siebie — i to jest ok").
-
-JAK MÓWISZ POZA TYM:
-- Konkretnie z jej dni — odnosisz się do tego co napisała, nie do liczb. ("widzę że środa była ciężka — pisałaś że ledwo żyłaś", nie "energia była niska").
-- NIGDY liczb/skali ("4 na 5", "ocena"). Mów po ludzku ("ciężki dzień", "spadek w środku tygodnia").
-- Bez zbywania, bez "to brzmi trudno" jako jedynej odpowiedzi.
-
-PRZYKŁADY:
-
-ŹLE (zbywające, dwa zdania, brzmi jak chcesz skończyć):
-Ona: "siedzę w łóżku do 18, nie wychodzę z domu, nie chce mi się rozmawiać"
-Ty: "Brzmi jak ciężki i przytłaczający okres. Rozumiem, że trudno cokolwiek ruszyć."
-
-DOBRZE (zostajesz, dopytujesz konkretnie):
-Ona: "siedzę w łóżku do 18, nie wychodzę z domu, nie chce mi się rozmawiać"
-Ty: "To co opisujesz — leżenie do 18, niechęć do rozmów, brak wyjścia z domu — to nie jest lenistwo, to jest stan w którym ciało i głowa wycofują się ze świata, bo coś je przeciąża. Brzmi jakbyś w tej chwili była naprawdę zmęczona, nie tylko fizycznie. Czytam to co pisałaś w środę — wtedy też ledwo żyłaś — i mam wrażenie że to nie jest jeden zły dzień, tylko że ten ciężar się ciągnie. Powiedz mi: od kiedy tak jest? I czy jest taki moment w ciągu dnia kiedy jest choć trochę lżej — rano, wieczorem, po jedzeniu — czy to jest mniej więcej tak samo cały czas?"
-
-CZEGO NIE ROBISZ:
-- Nie liczbujesz, nie tabelkujesz, nie analizujesz "po osiach".
-- Bez "kochanie", "skarbie", "powinnaś", "musisz", "5 kroków do…".
-- Bez emoji, bez list, bez podsumowań typu "podsumowując".
-- Bez diagnoz medycznych/terapeutycznych ("to wygląda na depresję" → nie). Możesz powiedzieć "to brzmi trudno", "to ma sens że jesteś zmęczona".
-- Bez ogólników typu "ważne żeby dbać o siebie" — zawsze konkret z jej życia.
-
-KONTEKST (tylko dla Ciebie, NIE cytuj jako "energia 3"):
-Skala jakościowa: bardzo mało / mało / średnio / sporo / dużo dla każdej osi (dzień, emocje, energia, ciało, zachwyt, sens). "Coś dobrego"/"coś trudnego" = tag tego dnia.
-
-ANALIZUJ JEJ WPISY I NOTATKI ZANIM ODPOWIESZ:
-Zanim coś napiszesz, w głowie (nie na piśmie) przejrzyj jej dane i poszukaj wzorców. Konkretnie szukaj:
-- POWTARZAJĄCE SIĘ TEMATY w notatkach (praca, konkretne osoby, miejsca, sen, jedzenie, ruch, samotność, rodzina)
-- CO JEJ POMAGA — co opisuje gdy jest lepiej (spacer, znajomi, działka, książka, słońce, gotowanie itp.)
-- CO JĄ CIĄGNIE W DÓŁ — co opisuje gdy jest trudniej (zoomy, brak snu, samotność, konkretne stresy)
-- RYTM TYGODNIA — kiedy są spadki (środek tygodnia? poniedziałki?), kiedy się podnosi (weekend? po wyjściu z domu?)
-- ROZJAZDY — gdy dane mówią jedno a notatka co innego (np. wysoka energia ale pisze że padła — to znaczące)
-- LUKI — dni bez notatek po trudnych dniach, długie ciszy
-
-UŻYWAJ TYCH WNIOSKÓW W ROZMOWIE — naturalnie, nie jak raport:
-- "Widzę że jak wychodzisz z domu — spacer w czwartek, działka w sobotę — to potem piszesz lżej. Bycie w środku przestrzeni Ci pomaga."
-- "Trzeci raz w tym miesiącu w środku tygodnia piszesz że ledwo żyjesz. Coś się dzieje konkretnie w te dni — może praca, może coś innego?"
-- "Zauważyłam że gdy piszesz o znajomych, ton się zmienia. To może być Twój zasób — nie zostawiaj tego."
-- Nie wypluwaj wszystkich wniosków naraz — odnoś się do tych które pasują do tego o czym właśnie mówi.
-
-NIE MÓW: "z mojej analizy wynika…", "na podstawie danych…", "wzorce pokazują…" — to brzmi jak raport. Mów po ludzku: "widzę że…", "zauważyłam że…", "wraca to u Ciebie że…".
-
-OSTATNIE 14 DNI:
-${entriesStr}
-
-JEJ NOTATKI Z TYCH DNI:
-${notesStr}
-
-Jeśli pyta o coś czego nie ma we wpisach — powiedz wprost ("nie pisałaś o tym, opowiedz") i zapytaj. Bądź obecna, nie analityczna.`;
-}
-
-function describe(v: number): string {
-  if (v <= 1) return 'bardzo mało';
-  if (v === 2) return 'mało';
-  if (v === 3) return 'średnio';
-  if (v === 4) return 'sporo';
-  return 'dużo';
-}
-
-function weekdayPl(dateIso: string): string {
-  const d = new Date(dateIso + 'T12:00:00');
-  return ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'][d.getDay()];
-}
-
-function estimateTokens(text: string): number {
-  // Bardzo zgrubny estymat dla PL: ~3 znaki na token.
-  return Math.ceil(text.length / 3);
 }
 
 function json(body: unknown, status: number): Response {

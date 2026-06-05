@@ -158,8 +158,21 @@ export default function Home() {
         {/* Top label */}
         <View className="flex-row items-center justify-between">
           <Text variant="eyebrow">DAILY — BLOOM</Text>
-          <View className="w-5 h-5 rounded-full bg-ink items-center justify-center">
-            <View className="w-1.5 h-1.5 rounded-full bg-paper" />
+          <View className="flex-row items-center" style={{ gap: 12 }}>
+            <Pressable
+              onPress={() => router.push('/docs')}
+              accessibilityLabel="Dokumentacja API"
+              hitSlop={8}
+            >
+              <View style={{ width: 14, height: 18, borderWidth: 1.2, borderColor: '#1C1C19', borderRadius: 1, position: 'relative' }}>
+                <View style={{ position: 'absolute', top: 4, left: 2, right: 2, height: 1, backgroundColor: '#1C1C19' }} />
+                <View style={{ position: 'absolute', top: 8, left: 2, right: 2, height: 1, backgroundColor: '#1C1C19' }} />
+                <View style={{ position: 'absolute', top: 12, left: 2, right: 4, height: 1, backgroundColor: '#1C1C19' }} />
+              </View>
+            </Pressable>
+            <View className="w-5 h-5 rounded-full bg-ink items-center justify-center">
+              <View className="w-1.5 h-1.5 rounded-full bg-paper" />
+            </View>
           </View>
         </View>
 

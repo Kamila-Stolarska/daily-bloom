@@ -32,6 +32,8 @@ function AuthGate() {
     if (!hydrated) return;
     const onAuth = segments[0] === 'auth';
     const onOnboarding = segments[0] === 'onboarding';
+    const onDocs = segments[0] === 'docs';
+    if (onDocs) return; // strona dokumentacji publiczna
     if (!authed) {
       if (!onAuth) router.replace('/auth');
     } else if (!name) {
