@@ -115,15 +115,12 @@ export function AttachPhotosButton({ noteId, onBeforeUpload, onAdded }: Props) {
   async function handlePress() {
     if (busy) return;
 
-    // Web: użyj window.confirm jako prostego wyboru (RN Alert.alert nie obsługuje
-    // wielu przycisków na webie). expo-image-picker launchCameraAsync na webie używa
-    // getUserMedia (działa w nowszych przeglądarkach), a launchImageLibraryAsync → file picker.
+    // Web: od razu wołamy launchImageLibraryAsync. expo-image-picker tworzy
+    // `<input type="file" accept="image/*">`, a iOS Safari sam pokazuje swój
+    // natywny action sheet z opcjami "Biblioteka zdjęć / Zrób zdjęcie / Wybierz
+    // pliki" — nie potrzebujemy własnego potwierdzenia.
     if (Platform.OS === 'web') {
-      const useCamera =
-        typeof window !== 'undefined' &&
-        window.confirm('Zrobić zdjęcie aparatem? (Anuluj = wybierz z galerii)');
-      if (useCamera) await processResult(await takePhoto());
-      else await processResult(await pickFromLibrary());
+      await processResult(await pickFromLibrary());
       return;
     }
 
