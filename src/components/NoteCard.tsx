@@ -1,9 +1,13 @@
-// Karta pojedynczej notatki — używana na home (read-only) i w note.tsx (z usuń).
+// Karta pojedynczej notatki — używana na home (read-only) i w note.tsx (z usuń + dodaj zdjęcia).
+// Pod tekstem pasek miniatur zdjęć przypiętych do tej notatki; tap → fullscreen preview,
+// long-press → usuń.
 
 import { Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { Note } from '../lib/store';
 import { Text } from './ui/text';
+import { EntryPhotosStrip } from './note/EntryPhotosStrip';
+import { AttachPhotosButton } from './note/AttachPhotosButton';
 
 function TrashIcon({ size = 18, color = '#7A6F62' }: { size?: number; color?: string }) {
   return (
@@ -30,9 +34,11 @@ type Props = {
   note: Note;
   onPress?: () => void;
   onDelete?: () => void;
+  /** Czy renderować plusik do dorzucania kolejnych zdjęć (true w edytorze, false na home). */
+  allowAttach?: boolean;
 };
 
-export function NoteCard({ note, onPress, onDelete }: Props) {
+export function NoteCard({ note, onPress, onDelete, allowAttach }: Props) {
   const Wrapper: any = onPress ? Pressable : View;
   return (
     <View style={{ marginBottom: 12 }}>
@@ -43,16 +49,19 @@ export function NoteCard({ note, onPress, onDelete }: Props) {
         <Text variant="mono" style={{ color: '#7A6F62' }}>
           {formatTime(note.createdAtIso)}
         </Text>
-        {onDelete && (
-          <Pressable
-            onPress={onDelete}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="usuń notatkę"
-          >
-            <TrashIcon />
-          </Pressable>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          {allowAttach && <AttachPhotosButton noteId={note.id} />}
+          {onDelete && (
+            <Pressable
+              onPress={onDelete}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="usuń notatkę"
+            >
+              <TrashIcon />
+            </Pressable>
+          )}
+        </View>
       </View>
       <Wrapper
         onPress={onPress}
@@ -64,9 +73,12 @@ export function NoteCard({ note, onPress, onDelete }: Props) {
           paddingVertical: 16,
         }}
       >
-        <Text variant="body" style={{ color: '#1A1614', lineHeight: 24 }}>
-          {note.text}
-        </Text>
+        {note.text.trim().length > 0 && (
+          <Text variant="body" style={{ color: '#1A1614', lineHeight: 24 }}>
+            {note.text}
+          </Text>
+        )}
+        <EntryPhotosStrip noteId={note.id} />
       </Wrapper>
     </View>
   );

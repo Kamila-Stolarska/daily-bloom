@@ -14,6 +14,8 @@ type Props = {
   onTranscribed: (text: string) => void;
   /** Web-only. Na natywne null. */
   editor: Editor | null;
+  /** Dodatkowy przycisk po lewej od mikrofonu (np. dodawanie zdjęć). */
+  trailingSlot?: React.ReactNode;
 };
 
 function ToolbarBtn({
@@ -80,7 +82,7 @@ function ListIcon({ color = '#1A1614' }: { color?: string }) {
   );
 }
 
-export function NoteEditorToolbar({ onTranscribed, editor }: Props) {
+export function NoteEditorToolbar({ onTranscribed, editor, trailingSlot }: Props) {
   const isWeb = Platform.OS === 'web';
   const canFormat = isWeb && !!editor;
 
@@ -128,7 +130,10 @@ export function NoteEditorToolbar({ onTranscribed, editor }: Props) {
         )}
       </View>
 
-      <DictateButton onTranscribed={onTranscribed} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+        {trailingSlot}
+        <DictateButton onTranscribed={onTranscribed} />
+      </View>
     </View>
   );
 }

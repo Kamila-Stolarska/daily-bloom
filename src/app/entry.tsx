@@ -24,6 +24,8 @@ import { Button } from '../components/ui/button';
 import { Text } from '../components/ui/text';
 import { NoteEditor, type NoteEditorHandle } from '../components/note/NoteEditor';
 import { NoteEditorToolbar } from '../components/note/NoteEditorToolbar';
+import { AttachPhotosButton } from '../components/note/AttachPhotosButton';
+import { EntryPhotosStrip } from '../components/note/EntryPhotosStrip';
 
 type Draft = Partial<Record<(typeof AXIS_QUESTIONS)[number]['axis'], Scale>> & {
   somethingGood?: boolean;
@@ -199,6 +201,8 @@ export default function EntryScreen() {
   const [step, setStep] = useState<Step>({ kind: 'axis', index: 0 });
   const [savedEntry, setSavedEntry] = useState<Entry | null>(null);
   const [noteText, setNoteText] = useState('');
+  // Id notatki tworzonej/edytowanej w step 'note' — null dopóki nie powstała.
+  const [composerNoteId, setComposerNoteId] = useState<string | null>(null);
   const [composerHeight, setComposerHeight] = useState(LINE_HEIGHT * 6);
   const noteEditorRef = useRef<NoteEditorHandle | null>(null);
   // Force re-render toolbara, gdy edytor Tiptap się zainicjalizuje / zmieni stan formatowania.
@@ -277,9 +281,24 @@ export default function EntryScreen() {
     setStep({ kind: 'bloom' });
   }
 
+  async function ensureDraftNote(): Promise<string> {
+    if (composerNoteId) return composerNoteId;
+    if (!savedEntry) throw new Error('entry not saved yet');
+    const n = await addNote(savedEntry.dateIso, noteText.trim());
+    setComposerNoteId(n.id);
+    return n.id;
+  }
+
   async function finishNote() {
-    if (savedEntry && noteText.trim()) {
-      await addNote(savedEntry.dateIso, noteText.trim());
+    if (savedEntry) {
+      const updateNoteFn = useStore.getState().updateNote;
+      const trimmed = noteText.trim();
+      if (composerNoteId) {
+        // Notatka już istnieje (utworzona przez plusik) — update tekstu.
+        await updateNoteFn(savedEntry.dateIso, composerNoteId, trimmed);
+      } else if (trimmed) {
+        await addNote(savedEntry.dateIso, trimmed);
+      }
     }
     router.replace('/');
   }
@@ -403,7 +422,12 @@ export default function EntryScreen() {
               // Po wstawieniu odśwież lokalny `noteText` z edytora — `onChange`
               // edytora i tak to zrobi, ale na natywne robimy to przez ref.
             }}
+            trailingSlot={
+              <AttachPhotosButton noteId={composerNoteId} onBeforeUpload={ensureDraftNote} />
+            }
           />
+
+          {composerNoteId && <EntryPhotosStrip noteId={composerNoteId} />}
 
           <View
             style={{

@@ -11,7 +11,9 @@
       "supportsTablet": false,
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Daily Bloom używa mikrofonu, żeby zapisać Twoją notatkę głosem."
+        "NSMicrophoneUsageDescription": "Daily Bloom używa mikrofonu, żeby zapisać Twoją notatkę głosem.",
+        "NSCameraUsageDescription": "Daily Bloom używa aparatu, żeby dodać zdjęcia do Twojej notatki.",
+        "NSPhotoLibraryUsageDescription": "Daily Bloom potrzebuje dostępu do galerii, żeby przypiąć zdjęcia do notatki."
       }
     },
     "android": {
@@ -23,7 +25,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": ["RECORD_AUDIO", "CAMERA", "READ_MEDIA_IMAGES"]
     },
     "web": {
       "output": "single",
@@ -46,6 +48,13 @@
         "expo-audio",
         {
           "microphonePermission": "Daily Bloom używa mikrofonu, żeby zapisać Twoją notatkę głosem."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Daily Bloom potrzebuje dostępu do galerii, żeby przypiąć zdjęcia do notatki.",
+          "cameraPermission": "Daily Bloom używa aparatu, żeby dodać zdjęcia do Twojej notatki."
         }
       ]
     ],

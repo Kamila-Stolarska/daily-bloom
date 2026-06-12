@@ -11,6 +11,14 @@ import {
   updateNote as dbUpdateNote,
   deleteNote as dbDeleteNote,
 } from './db/notes';
+import {
+  listPhotosByNote,
+  uploadPhoto as dbUploadPhoto,
+  removePhoto as dbRemovePhoto,
+  removePhotosForNoteStorage,
+  type Photo,
+  type UploadInput,
+} from './db/photos';
 import { getOrCreateProfile, setProfileName } from './db/profile';
 
 export type Entry = {
@@ -32,6 +40,8 @@ export type Note = {
   createdAtIso: string;
 };
 
+export type { Photo } from './db/photos';
+
 type State = {
   hydrated: boolean;
   authed: boolean;
@@ -39,11 +49,14 @@ type State = {
   userId: string;
   entries: Record<string, Entry>;
   notesByDate: Record<string, Note[]>;
+  photosByNoteId: Record<string, Photo[]>;
   setName: (name: string) => Promise<void>;
   saveEntry: (entry: Entry) => Promise<void>;
   addNote: (dateIso: string, text: string) => Promise<Note>;
   updateNote: (dateIso: string, id: string, text: string) => Promise<void>;
   deleteNote: (dateIso: string, id: string) => Promise<void>;
+  addPhoto: (noteId: string, input: UploadInput) => Promise<Photo>;
+  removePhoto: (noteId: string, photo: Photo) => Promise<void>;
   hydrate: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -57,6 +70,7 @@ type CacheBlob = {
   userId: string;
   entries: Record<string, Entry>;
   notesByDate: Record<string, Note[]>;
+  // Photos NIE są keszowane lokalnie — signed URLs i tak wygasają po 1h, zawsze świeży fetch.
 };
 
 type LegacyEntry = Entry & { note?: string };
@@ -137,12 +151,21 @@ export const useStore = create<State>((set, get) => ({
   userId: '',
   entries: {},
   notesByDate: {},
+  photosByNoteId: {},
 
   hydrate: async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     const session = sessionData.session;
     if (!session) {
-      set({ hydrated: true, authed: false, name: null, userId: '', entries: {}, notesByDate: {} });
+      set({
+        hydrated: true,
+        authed: false,
+        name: null,
+        userId: '',
+        entries: {},
+        notesByDate: {},
+        photosByNoteId: {},
+      });
       return;
     }
     const authUserId = session.user.id;
@@ -166,9 +189,13 @@ export const useStore = create<State>((set, get) => ({
     await migrateLegacyIfNeeded(authUserId);
 
     // 3) Świeży fetch z Supabase.
-    const [entries, notesByDate] = await Promise.all([
+    const [entries, notesByDate, photosByNoteId] = await Promise.all([
       listEntries(authUserId),
       listNotesByDate(authUserId),
+      listPhotosByNote(authUserId).catch((e) => {
+        console.warn('photos hydrate failed:', e);
+        return {} as Record<string, Photo[]>;
+      }),
     ]);
     set({
       hydrated: true,
@@ -177,6 +204,7 @@ export const useStore = create<State>((set, get) => ({
       userId: profile.flowerSeed,
       entries,
       notesByDate,
+      photosByNoteId,
     });
     await saveCache({
       name: profile.name,
@@ -212,22 +240,14 @@ export const useStore = create<State>((set, get) => ({
   addNote: async (dateIso, text) => {
     const session = (await supabase.auth.getSession()).data.session;
     if (!session) throw new Error('not authed');
+    // Tekst może być pusty — notatka może istnieć tylko jako kontener na zdjęcia.
     const trimmed = text.trim();
-    if (!trimmed) throw new Error('empty note');
-    let note: Note;
-    try {
-      note = await dbAddNote(session.user.id, dateIso, trimmed);
-    } catch (e) {
-      // Optymistycznie — jakby sieci brak, zapisujemy lokalnie z tymczasowym id.
-      note = { id: genNoteId(), text: trimmed, createdAtIso: new Date().toISOString() };
-      throw e;
-    } finally {
-      const { notesByDate, entries, name, userId } = get();
-      const list = notesByDate[dateIso] ?? [];
-      const nextNotes = { ...notesByDate, [dateIso]: [...list, note!] };
-      set({ notesByDate: nextNotes });
-      await saveCache({ name, userId, entries, notesByDate: nextNotes });
-    }
+    const note = await dbAddNote(session.user.id, dateIso, trimmed);
+    const { notesByDate, entries, name, userId } = get();
+    const list = notesByDate[dateIso] ?? [];
+    const nextNotes = { ...notesByDate, [dateIso]: [...list, note] };
+    set({ notesByDate: nextNotes });
+    await saveCache({ name, userId, entries, notesByDate: nextNotes });
     return note;
   },
 
@@ -235,7 +255,6 @@ export const useStore = create<State>((set, get) => ({
     const session = (await supabase.auth.getSession()).data.session;
     if (!session) throw new Error('not authed');
     const trimmed = text.trim();
-    if (!trimmed) throw new Error('empty note');
     await dbUpdateNote(session.user.id, id, trimmed);
     const { notesByDate, entries, name, userId } = get();
     const list = notesByDate[dateIso] ?? [];
@@ -248,19 +267,66 @@ export const useStore = create<State>((set, get) => ({
   deleteNote: async (dateIso, id) => {
     const session = (await supabase.auth.getSession()).data.session;
     if (!session) throw new Error('not authed');
+    // Zbierz ścieżki zdjęć tej notatki PRZED usunięciem (CASCADE w DB skasuje
+    // rzędy `entry_photos`, ale plików w buckecie trzeba ręcznie).
+    const { photosByNoteId } = get();
+    const photoPaths = (photosByNoteId[id] ?? []).map((p) => p.storagePath);
     await dbDeleteNote(session.user.id, id);
-    const { notesByDate, entries, name, userId } = get();
+    await removePhotosForNoteStorage(photoPaths);
+    const { notesByDate, entries, name, userId, photosByNoteId: pbn } = get();
     const list = (notesByDate[dateIso] ?? []).filter((n) => n.id !== id);
     const nextNotes = { ...notesByDate };
     if (list.length) nextNotes[dateIso] = list;
     else delete nextNotes[dateIso];
-    set({ notesByDate: nextNotes });
+    const nextPhotos = { ...pbn };
+    delete nextPhotos[id];
+    set({ notesByDate: nextNotes, photosByNoteId: nextPhotos });
     await saveCache({ name, userId, entries, notesByDate: nextNotes });
+  },
+
+  addPhoto: async (noteId, input) => {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
+    // dateIso wyciągamy z notatki w lokalnym state (powinna istnieć — composer
+    // tworzy draft note PRZED pierwszym uploadem).
+    const { notesByDate } = get();
+    let dateIso = '';
+    for (const [d, list] of Object.entries(notesByDate)) {
+      if (list.some((n) => n.id === noteId)) {
+        dateIso = d;
+        break;
+      }
+    }
+    if (!dateIso) throw new Error('note not found for photo upload');
+    const photo = await dbUploadPhoto(session.user.id, dateIso, noteId, input);
+    const { photosByNoteId } = get();
+    const list = photosByNoteId[noteId] ?? [];
+    set({ photosByNoteId: { ...photosByNoteId, [noteId]: [...list, photo] } });
+    return photo;
+  },
+
+  removePhoto: async (noteId, photo) => {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) throw new Error('not authed');
+    await dbRemovePhoto(session.user.id, photo);
+    const { photosByNoteId } = get();
+    const list = (photosByNoteId[noteId] ?? []).filter((p) => p.id !== photo.id);
+    const next = { ...photosByNoteId };
+    if (list.length) next[noteId] = list;
+    else delete next[noteId];
+    set({ photosByNoteId: next });
   },
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ authed: false, name: null, userId: '', entries: {}, notesByDate: {} });
+    set({
+      authed: false,
+      name: null,
+      userId: '',
+      entries: {},
+      notesByDate: {},
+      photosByNoteId: {},
+    });
   },
 }));
 

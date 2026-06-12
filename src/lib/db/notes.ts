@@ -33,8 +33,8 @@ export async function addNote(
   dateIso: string,
   text: string,
 ): Promise<Note> {
+  // Tekst może być pusty — notatka istnieje też jako kontener na zdjęcia.
   const trimmed = text.trim();
-  if (!trimmed) throw new Error('empty note');
   const { data, error } = await supabase
     .from('notes')
     .insert({ user_id: userId, date: dateIso, text: trimmed })
@@ -49,8 +49,8 @@ export async function updateNote(
   id: string,
   text: string,
 ): Promise<void> {
+  // Pusty tekst dozwolony — notatka może zostać tylko ze zdjęciami.
   const trimmed = text.trim();
-  if (!trimmed) throw new Error('empty note');
   const { error } = await supabase
     .from('notes')
     .update({ text: trimmed })
