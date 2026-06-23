@@ -11,6 +11,8 @@ import {
   PRICE_OUT_PER_TOKEN_USD,
   buildSystemPrompt,
   estimateTokens,
+  fetchRelevantEntries,
+  loadPersonaForChat,
   jsonResponse,
   todayIsoUtc,
   isValidDateIso,
@@ -23,7 +25,7 @@ import { requireUser } from '../_lib/auth';
 
 export const config = { runtime: 'edge' };
 
-type Body = { message?: string; date?: string };
+type Body = { message?: string; date?: string; therapist_id?: string };
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -58,12 +60,15 @@ export default async function handler(req: Request): Promise<Response> {
   if (profErr || !profile) return jsonResponse({ error: 'profile-not-found' }, 404);
   if ((profile.credit_cents ?? 0) <= 0) return jsonResponse({ error: 'out-of-credits' }, 402);
 
-  // Kontekst — ostatnie 14 dni licząc od dateContext.
+  const personaRes = await loadPersonaForChat(supabase, userId, body.therapist_id ?? null);
+  if (!personaRes.ok) return jsonResponse({ error: personaRes.error }, personaRes.status);
+
+  // Kontekst — ostatnie 7 dni licząc od dateContext. Starsza historia z hybrid search.
   const since = new Date(dateContext + 'T00:00:00Z');
-  since.setUTCDate(since.getUTCDate() - 14);
+  since.setUTCDate(since.getUTCDate() - 7);
   const sinceIso = since.toISOString().slice(0, 10);
 
-  const [entriesRes, notesRes, historyRes] = await Promise.all([
+  const [entriesRes, notesRes, historyRes, relevant] = await Promise.all([
     supabase
       .from('entries')
       .select('date,day,emotions,energy,body,delight,meaning,something_good,something_hard')
@@ -82,13 +87,14 @@ export default async function handler(req: Request): Promise<Response> {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(20),
+    fetchRelevantEntries(supabase, userId, message, 8),
   ]);
 
   const entries = (entriesRes.data ?? []) as EntryRow[];
   const notes = (notesRes.data ?? []) as NoteRow[];
   const history = ((historyRes.data ?? []) as Array<{ role: Role; content: string }>).reverse();
 
-  const systemPrompt = buildSystemPrompt(profile.name, entries, notes);
+  const systemPrompt = buildSystemPrompt(personaRes.persona, profile.name, entries, notes, relevant);
   const messages: ChatMsg[] = [
     { role: 'system', content: systemPrompt },
     ...history.map((m) => ({ role: m.role, content: m.content })),

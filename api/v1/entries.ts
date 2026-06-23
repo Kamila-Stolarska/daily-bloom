@@ -5,6 +5,7 @@
 
 import { CORS_HEADERS, jsonResponse, todayIsoUtc, isValidDateIso } from '../_lib/chat-shared';
 import { requireUser } from '../_lib/auth';
+import { embedText, buildEmbeddingSource } from '../_lib/embedding';
 
 export const config = { runtime: 'edge' };
 
@@ -98,6 +99,30 @@ export default async function handler(req: Request): Promise<Response> {
       text: noteRow.text as string,
       createdAtIso: noteRow.created_at as string,
     };
+  }
+
+  // Embedding — best-effort, błąd nie blokuje odpowiedzi.
+  try {
+    const noteText = noteOut?.text ?? (typeof body.note === 'string' ? body.note.trim() : '');
+    const embeddingSource = buildEmbeddingSource({
+      date: entryRow.date as string,
+      day: entryRow.day as number,
+      emotions: entryRow.emotions as number,
+      energy: entryRow.energy as number,
+      body: entryRow.body as number,
+      delight: entryRow.delight as number,
+      meaning: entryRow.meaning as number,
+      somethingGood: entryRow.something_good as boolean,
+      somethingHard: entryRow.something_hard as boolean,
+      noteText,
+    });
+    const vec = await embedText(embeddingSource);
+    await supabase
+      .from('entries')
+      .update({ embedding_source: embeddingSource, embedding: `[${vec.join(',')}]` })
+      .eq('id', entryRow.id as string);
+  } catch (e) {
+    console.warn('embedding update failed:', (e as Error).message);
   }
 
   return jsonResponse(

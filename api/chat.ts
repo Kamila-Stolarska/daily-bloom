@@ -19,6 +19,8 @@ import {
   CORS_HEADERS,
   buildSystemPrompt,
   estimateTokens,
+  fetchRelevantEntries,
+  loadPersonaForChat,
   type Role,
   type ChatMsg,
   type EntryRow,
@@ -52,9 +54,9 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'missing-auth' }, 401);
   }
 
-  let body: { message?: string };
+  let body: { message?: string; therapist_id?: string };
   try {
-    body = (await req.json()) as { message?: string };
+    body = (await req.json()) as { message?: string; therapist_id?: string };
   } catch {
     return json({ error: 'invalid-json' }, 400);
   }
@@ -62,6 +64,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (!message) {
     return json({ error: 'empty-message' }, 400);
   }
+  const requestedTherapistId = body.therapist_id?.trim() || null;
 
   // Klient Supabase z forwardowanym JWT — RLS naturalne na wszystkich zapytaniach.
   const supabase = createClient(supaUrl, supaAnon, {
@@ -88,12 +91,18 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'out-of-credits' }, 402);
   }
 
-  // Kontekst — ostatnie 14 dni.
+  // Persona — z DB (po request albo profiles.active_therapist_id; fallback do is_default).
+  const personaRes = await loadPersonaForChat(supabase, userId, requestedTherapistId);
+  if (!personaRes.ok) {
+    return json({ error: personaRes.error }, personaRes.status);
+  }
+
+  // Kontekst — ostatnie 7 dni (świeży kontekst). Starsza historia dociągana przez hybrid search.
   const since = new Date();
-  since.setDate(since.getDate() - 14);
+  since.setDate(since.getDate() - 7);
   const sinceIso = since.toISOString().slice(0, 10);
 
-  const [entriesRes, notesRes, historyRes] = await Promise.all([
+  const [entriesRes, notesRes, historyRes, relevant] = await Promise.all([
     supabase
       .from('entries')
       .select('date,day,emotions,energy,body,delight,meaning,something_good,something_hard')
@@ -112,6 +121,7 @@ export default async function handler(req: Request): Promise<Response> {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(20),
+    fetchRelevantEntries(supabase, userId, message, 8),
   ]);
 
   const entries = (entriesRes.data ?? []) as EntryRow[];
@@ -119,7 +129,7 @@ export default async function handler(req: Request): Promise<Response> {
   const history = ((historyRes.data ?? []) as Array<{ role: Role; content: string }>)
     .reverse(); // chronologicznie
 
-  const systemPrompt = buildSystemPrompt(profile.name, entries, notes);
+  const systemPrompt = buildSystemPrompt(personaRes.persona, profile.name, entries, notes, relevant);
   const messages: ChatMsg[] = [
     { role: 'system', content: systemPrompt },
     ...history.map((m) => ({ role: m.role, content: m.content })),

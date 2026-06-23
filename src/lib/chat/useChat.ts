@@ -14,12 +14,14 @@ function genLocalId(): string {
   return `c_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
-export function useChat() {
+export function useChat(therapistId?: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const therapistRef = useRef<string | null>(therapistId ?? null);
+  therapistRef.current = therapistId ?? null;
 
   // Load historii.
   useEffect(() => {
@@ -88,7 +90,7 @@ export function useChat() {
           'content-type': 'application/json',
           authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, therapist_id: therapistRef.current ?? undefined }),
         signal: controller.signal,
       });
 

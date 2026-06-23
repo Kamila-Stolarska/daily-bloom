@@ -12,15 +12,19 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Text } from '../components/ui/text';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ThinkingFlower } from '../components/chat/ThinkingFlower';
+import { TherapistPicker } from '../components/chat/TherapistPicker';
 import { useChat } from '../lib/chat/useChat';
+import { useTherapists } from '../lib/chat/useTherapists';
 import { DictateButton } from '../components/note/DictateButton';
 
 export default function ChatScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ initial?: string; autofocus?: string; mic?: string }>();
   const insets = useSafeAreaInsets();
-  const { messages, streaming, error, hydrated, send } = useChat();
+  const therapists = useTherapists();
+  const { messages, streaming, error, hydrated, send } = useChat(therapists.activeId);
   const [input, setInput] = useState(params.initial ?? '');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   // Autofocus przy wejściu jeśli przyszliśmy z chat bara z tapnięciem na input.
@@ -60,9 +64,14 @@ export default function ChatScreen() {
             ←
           </Text>
         </Pressable>
-        <Text variant="eyebrow" tone="ink">
-          DAILY — BLOOM
-        </Text>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text variant="eyebrow" tone="ink">
+            {therapists.active?.name?.toUpperCase() ?? 'DAILY — BLOOM'}
+          </Text>
+          <Text variant="eyebrow" tone="muted" style={{ marginLeft: 6 }}>
+            ▾
+          </Text>
+        </Pressable>
         <View style={{ width: 22 }} />
       </View>
 
@@ -219,6 +228,16 @@ export default function ChatScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <TherapistPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        catalog={therapists.catalog}
+        activeId={therapists.activeId}
+        onSelect={(id) => void therapists.setActive(id)}
+        onRestore={() => void therapists.restore()}
+        loading={therapists.loading}
+      />
     </SafeAreaView>
   );
 }
