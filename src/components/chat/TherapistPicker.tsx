@@ -154,15 +154,6 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
             </>
           ) : null}
 
-          <Pressable
-            onPress={onRestore}
-            disabled={loading}
-            style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}
-          >
-            <Text variant="caption" tone="muted" style={{ textDecorationLine: 'underline' }}>
-              {loading ? 'Odświeżam…' : 'Odzyskaj zakup'}
-            </Text>
-          </Pressable>
         </ScrollView>
       </View>
     </Modal>
