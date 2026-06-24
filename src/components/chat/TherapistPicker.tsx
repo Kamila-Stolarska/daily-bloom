@@ -79,22 +79,38 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                     <Text variant="body" tone="ink" style={{ fontSize: 16, fontWeight: '500' }}>
                       {t.name}
                     </Text>
-                    <View
-                      style={{
-                        marginLeft: 8,
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 10,
-                        backgroundColor: '#E8E4D2',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={{ fontSize: 11, marginRight: 3 }}>🧠</Text>
-                      <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-                        DARMOWY
-                      </Text>
-                    </View>
+                    {t.is_default ? (
+                      <View
+                        style={{
+                          marginLeft: 8,
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 10,
+                          backgroundColor: '#E8E4D2',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, marginRight: 3 }}>🧠</Text>
+                        <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                          DARMOWY
+                        </Text>
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          marginLeft: 8,
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 10,
+                          backgroundColor: '#F4E2D8',
+                        }}
+                      >
+                        <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                          PŁATNY
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   {t.short_bio ? (
                     <Text variant="caption" tone="muted" style={{ marginTop: 2, fontSize: 13, lineHeight: 18 }}>
