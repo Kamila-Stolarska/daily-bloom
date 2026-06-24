@@ -35,7 +35,7 @@ export default async function handler(req: Request): Promise<Response> {
 }
 
 async function getCatalog(supabase: SupabaseClient, userId: string): Promise<Response> {
-  const [catalogRes, entitlementsRes, profileRes, userRes] = await Promise.all([
+  const [catalogRes, entitlementsRes, profileRes] = await Promise.all([
     supabase
       .from('therapists')
       .select('id, shopify_product_id, shopify_variant_id, handle, name, short_bio, avatar_url, price_cents, sort_order, is_default')
@@ -43,15 +43,12 @@ async function getCatalog(supabase: SupabaseClient, userId: string): Promise<Res
       .order('sort_order', { ascending: true }),
     supabase.from('user_therapists').select('therapist_id').eq('user_id', userId),
     supabase.from('profiles').select('active_therapist_id').eq('user_id', userId).maybeSingle<{ active_therapist_id: string | null }>(),
-    supabase.auth.getUser(),
   ]);
 
   if (catalogRes.error) return jsonResponse({ error: 'db-error', detail: catalogRes.error.message }, 500);
 
   const catalog = (catalogRes.data ?? []) as TherapistRow[];
   const unlockedIds = new Set((entitlementsRes.data ?? []).map((r) => (r as { therapist_id: string }).therapist_id));
-  const userEmail = userRes.data.user?.email ?? '';
-
   const items = catalog.map((t) => {
     const isUnlocked = t.is_default || unlockedIds.has(t.id);
     return {
@@ -63,7 +60,7 @@ async function getCatalog(supabase: SupabaseClient, userId: string): Promise<Res
       price_cents: t.price_cents,
       is_unlocked: isUnlocked,
       is_default: t.is_default,
-      checkout_url: isUnlocked ? null : buildCheckoutUrl(t.shopify_variant_id, userEmail, userId),
+      checkout_url: isUnlocked ? null : buildCheckoutUrl(t.shopify_variant_id, userId),
     };
   });
 
@@ -118,12 +115,11 @@ async function setActive(supabase: SupabaseClient, userId: string, req: Request)
 // Buduje URL bezpośredni do koszyka z variantem + cart attribute user_id.
 // Format /cart/<variant>:1?attributes[user_id]=... przenosi atrybut przez cały checkout,
 // więc webhook orders/paid zawsze trafia we właściwego usera, niezależnie od emaila.
-function buildCheckoutUrl(variantId: string | null, email: string, userId: string): string | null {
+function buildCheckoutUrl(variantId: string | null, userId: string): string | null {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
   if (!domain || !variantId) return null;
   const params = new URLSearchParams({
     [`attributes[user_id]`]: userId,
   });
-  if (email) params.set('checkout[email]', email);
   return `https://${domain}/cart/${encodeURIComponent(variantId)}:1?${params.toString()}`;
 }
