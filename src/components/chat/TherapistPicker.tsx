@@ -75,9 +75,27 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                 }}
               >
                 <View style={{ flex: 1 }}>
-                  <Text variant="body" tone="ink" style={{ fontSize: 16, fontWeight: '500' }}>
-                    {t.name}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text variant="body" tone="ink" style={{ fontSize: 16, fontWeight: '500' }}>
+                      {t.name}
+                    </Text>
+                    <View
+                      style={{
+                        marginLeft: 8,
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 10,
+                        backgroundColor: '#E8E4D2',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, marginRight: 3 }}>🧠</Text>
+                      <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                        FREE
+                      </Text>
+                    </View>
+                  </View>
                   {t.short_bio ? (
                     <Text variant="caption" tone="muted" style={{ marginTop: 2, fontSize: 13, lineHeight: 18 }}>
                       {t.short_bio}
@@ -121,9 +139,23 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                    <Text variant="body" tone="ink" style={{ flex: 1, fontSize: 16, fontWeight: '500' }}>
+                    <Text variant="body" tone="ink" style={{ fontSize: 16, fontWeight: '500' }}>
                       {t.name}
                     </Text>
+                    <View
+                      style={{
+                        marginLeft: 8,
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 10,
+                        backgroundColor: '#F4E2D8',
+                      }}
+                    >
+                      <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                        PŁATNY
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }} />
                     <Text variant="caption" tone="ink" style={{ fontSize: 14 }}>
                       {formatPrice(t.price_cents)}
                     </Text>
