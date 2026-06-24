@@ -91,7 +91,7 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                           alignItems: 'center',
                         }}
                       >
-                        <Text style={{ fontSize: 11, marginRight: 3 }}>🧠</Text>
+                        <Text style={{ fontSize: 11, marginRight: 3 }}>🎁</Text>
                         <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
                           DARMOWY
                         </Text>
@@ -104,8 +104,11 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                           paddingVertical: 2,
                           borderRadius: 10,
                           backgroundColor: '#F4E2D8',
+                          flexDirection: 'row',
+                          alignItems: 'center',
                         }}
                       >
+                        <Text style={{ fontSize: 11, marginRight: 3 }}>💎</Text>
                         <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
                           PŁATNY
                         </Text>
@@ -165,8 +168,11 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                         paddingVertical: 2,
                         borderRadius: 10,
                         backgroundColor: '#F4E2D8',
+                        flexDirection: 'row',
+                        alignItems: 'center',
                       }}
                     >
+                      <Text style={{ fontSize: 11, marginRight: 3 }}>💎</Text>
                       <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
                         PŁATNY
                       </Text>
