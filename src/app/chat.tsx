@@ -68,6 +68,43 @@ export default function ChatScreen() {
           <Text variant="eyebrow" tone="ink">
             {therapists.active?.name?.toUpperCase() ?? 'DAILY — BLOOM'}
           </Text>
+          {therapists.active ? (
+            therapists.active.is_default ? (
+              <View
+                style={{
+                  marginLeft: 8,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 10,
+                  backgroundColor: '#E8E4D2',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#1A1614', marginRight: 4 }} />
+                <Text variant="caption" tone="ink" style={{ fontSize: 10, fontWeight: '600', letterSpacing: 0.5 }}>
+                  DARMOWY
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  marginLeft: 8,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 10,
+                  backgroundColor: '#F4E2D8',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 10, marginRight: 3, color: '#1A1614' }}>{'\u2726\uFE0E'}</Text>
+                <Text variant="caption" tone="ink" style={{ fontSize: 10, fontWeight: '600', letterSpacing: 0.5 }}>
+                  PŁATNY
+                </Text>
+              </View>
+            )
+          ) : null}
           <Text variant="eyebrow" tone="muted" style={{ marginLeft: 6 }}>
             ▾
           </Text>

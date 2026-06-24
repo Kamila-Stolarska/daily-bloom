@@ -21,6 +21,51 @@ function formatPrice(cents: number): string {
   return `${(cents / 100).toFixed(0)} PLN`;
 }
 
+// 5 płatków (góra, lewo, prawo, dół-lewo, dół-prawo) + 1 środek = 6 kółek.
+function FlowerDots({ size = 12, color = '#1A1614' }: { size?: number; color?: string }) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.35;
+  const dot = size * 0.26;
+  // y w dół: 270=góra, 0=prawo, 180=lewo, 60=dół-prawo, 120=dół-lewo
+  const petals = [270, 0, 60, 120, 180].map((deg) => {
+    const rad = (deg * Math.PI) / 180;
+    return {
+      left: cx + r * Math.cos(rad) - dot / 2,
+      top: cy + r * Math.sin(rad) - dot / 2,
+    };
+  });
+  return (
+    <View style={{ width: size, height: size }}>
+      {petals.map((p, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: p.left,
+            top: p.top,
+            width: dot,
+            height: dot,
+            borderRadius: dot / 2,
+            backgroundColor: color,
+          }}
+        />
+      ))}
+      <View
+        style={{
+          position: 'absolute',
+          left: cx - dot / 2,
+          top: cy - dot / 2,
+          width: dot,
+          height: dot,
+          borderRadius: dot / 2,
+          backgroundColor: color,
+        }}
+      />
+    </View>
+  );
+}
+
 export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect, onRestore, loading }: Props) {
   const unlocked = catalog.filter((t) => t.is_unlocked);
   const locked = catalog.filter((t) => !t.is_unlocked);
@@ -91,7 +136,7 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                           alignItems: 'center',
                         }}
                       >
-                        <Text style={{ fontSize: 11, marginRight: 4, color: '#1A1614' }}>{'\u2740\uFE0E'}</Text>
+                        <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#1A1614', marginRight: 5 }} />
                         <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
                           DARMOWY
                         </Text>
