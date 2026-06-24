@@ -92,7 +92,7 @@ export function TherapistPicker({ visible, onClose, catalog, activeId, onSelect,
                     >
                       <Text style={{ fontSize: 11, marginRight: 3 }}>🧠</Text>
                       <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-                        FREE
+                        DARMOWY
                       </Text>
                     </View>
                   </View>
