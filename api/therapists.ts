@@ -12,6 +12,7 @@ export const config = { runtime: 'edge' };
 type TherapistRow = {
   id: string;
   shopify_product_id: string | null;
+  shopify_variant_id: string | null;
   handle: string;
   name: string;
   short_bio: string | null;
@@ -37,7 +38,7 @@ async function getCatalog(supabase: SupabaseClient, userId: string): Promise<Res
   const [catalogRes, entitlementsRes, profileRes, userRes] = await Promise.all([
     supabase
       .from('therapists')
-      .select('id, shopify_product_id, handle, name, short_bio, avatar_url, price_cents, sort_order, is_default')
+      .select('id, shopify_product_id, shopify_variant_id, handle, name, short_bio, avatar_url, price_cents, sort_order, is_default')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
     supabase.from('user_therapists').select('therapist_id').eq('user_id', userId),
@@ -62,7 +63,7 @@ async function getCatalog(supabase: SupabaseClient, userId: string): Promise<Res
       price_cents: t.price_cents,
       is_unlocked: isUnlocked,
       is_default: t.is_default,
-      checkout_url: isUnlocked ? null : buildCheckoutUrl(t.handle, userEmail, userId),
+      checkout_url: isUnlocked ? null : buildCheckoutUrl(t.shopify_variant_id, userEmail, userId),
     };
   });
 
@@ -114,14 +115,15 @@ async function setActive(supabase: SupabaseClient, userId: string, req: Request)
   return jsonResponse({ ok: true, active_therapist_id: therapistId }, 200);
 }
 
-// Buduje URL do Shopify produktu z prefillem emaila i user_id (do późniejszego matchingu webhooka).
-// Wymaga env SHOPIFY_STORE_DOMAIN (np. "dailybloom.myshopify.com"). Bez niej zwraca null.
-function buildCheckoutUrl(handle: string, email: string, userId: string): string | null {
+// Buduje URL bezpośredni do koszyka z variantem + cart attribute user_id.
+// Format /cart/<variant>:1?attributes[user_id]=... przenosi atrybut przez cały checkout,
+// więc webhook orders/paid zawsze trafia we właściwego usera, niezależnie od emaila.
+function buildCheckoutUrl(variantId: string | null, email: string, userId: string): string | null {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  if (!domain) return null;
+  if (!domain || !variantId) return null;
   const params = new URLSearchParams({
     [`attributes[user_id]`]: userId,
   });
   if (email) params.set('checkout[email]', email);
-  return `https://${domain}/products/${encodeURIComponent(handle)}?${params.toString()}`;
+  return `https://${domain}/cart/${encodeURIComponent(variantId)}:1?${params.toString()}`;
 }
