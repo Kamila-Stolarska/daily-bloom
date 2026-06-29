@@ -1,11 +1,15 @@
-// POST /api/v1/entries — dodaj/zaktualizuj wpis (upsert po user_id + date).
+// /api/v1/entries
+//   POST — dodaj/zaktualizuj wpis dnia (upsert po userId + date) w Strapi.
+//   GET  — lista wpisów zalogowanego użytkownika (ze Strapi).
 // Auth: Authorization: Bearer <supabase_access_token>.
-// Body: { date?, day, emotions, energy, body, delight, meaning, somethingGood, somethingHard, note? }
-// date domyślnie = dziś (UTC). note opcjonalna — jeśli podana, dodaje wiersz do notes.
+// Architektura: Strapi = źródło prawdy dla wpisów; Supabase trzyma embedding + link do Strapi
+// (tabela `entry_embeddings`). Stara tabela `entries` w Supabase zostaje jako backup.
+// Notatki dalej w Supabase (poza zakresem migracji).
 
 import { CORS_HEADERS, jsonResponse, todayIsoUtc, isValidDateIso } from '../_lib/chat-shared';
 import { requireUser } from '../_lib/auth';
 import { embedText, buildEmbeddingSource } from '../_lib/embedding';
+import { listEntriesByUser, upsertEntry as upsertStrapiEntry, type StrapiEntry } from '../_lib/strapi';
 
 export const config = { runtime: 'edge' };
 
@@ -24,12 +28,39 @@ type Body = {
 
 const AXES = ['day', 'emotions', 'energy', 'body', 'delight', 'meaning'] as const;
 
+function strapiToWire(e: StrapiEntry) {
+  return {
+    dateIso: e.date,
+    day: e.day,
+    emotions: e.emotions,
+    energy: e.energy,
+    body: e.body,
+    delight: e.delight,
+    meaning: e.meaning,
+    somethingGood: e.somethingGood,
+    somethingHard: e.somethingHard,
+    createdAtIso: e.createdAt,
+    strapiDocumentId: e.documentId,
+  };
+}
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
-  if (req.method !== 'POST') return jsonResponse({ error: 'method-not-allowed' }, 405);
 
   const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
+  const { supabase, userId } = auth;
+
+  if (req.method === 'GET') {
+    try {
+      const list = await listEntriesByUser(userId);
+      return jsonResponse({ entries: list.map(strapiToWire) }, 200);
+    } catch (e) {
+      return jsonResponse({ error: 'strapi-list-failed', detail: (e as Error).message }, 502);
+    }
+  }
+
+  if (req.method !== 'POST') return jsonResponse({ error: 'method-not-allowed' }, 405);
 
   let body: Body;
   try {
@@ -56,33 +87,25 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'invalid-note', hint: 'note musi być stringiem ≤ 4000 znaków.' }, 400);
   }
 
-  const nowIso = new Date().toISOString();
-  const { supabase, userId } = auth;
-
-  const { data: entryRow, error: entryErr } = await supabase
-    .from('entries')
-    .upsert(
-      {
-        user_id: userId,
-        date,
-        day: body.day,
-        emotions: body.emotions,
-        energy: body.energy,
-        body: body.body,
-        delight: body.delight,
-        meaning: body.meaning,
-        something_good: body.somethingGood,
-        something_hard: body.somethingHard,
-        created_at: nowIso,
-      },
-      { onConflict: 'user_id,date' },
-    )
-    .select('*')
-    .single();
-  if (entryErr || !entryRow) {
-    return jsonResponse({ error: 'upsert-failed', detail: entryErr?.message }, 500);
+  let strapiEntry: StrapiEntry;
+  try {
+    strapiEntry = await upsertStrapiEntry({
+      userId,
+      date,
+      day: body.day!,
+      emotions: body.emotions!,
+      energy: body.energy!,
+      body: body.body!,
+      delight: body.delight!,
+      meaning: body.meaning!,
+      somethingGood: body.somethingGood,
+      somethingHard: body.somethingHard,
+    });
+  } catch (e) {
+    return jsonResponse({ error: 'strapi-upsert-failed', detail: (e as Error).message }, 502);
   }
 
+  // Notatka — pozostaje w Supabase.
   let noteOut: { id: string; date: string; text: string; createdAtIso: string } | undefined;
   if (typeof body.note === 'string' && body.note.trim().length > 0) {
     const { data: noteRow, error: noteErr } = await supabase
@@ -101,44 +124,41 @@ export default async function handler(req: Request): Promise<Response> {
     };
   }
 
-  // Embedding — best-effort, błąd nie blokuje odpowiedzi.
+  // Embedding — best-effort. Zapisujemy do tabeli `entry_embeddings` w Supabase z linkiem do Strapi.
   try {
     const noteText = noteOut?.text ?? (typeof body.note === 'string' ? body.note.trim() : '');
     const embeddingSource = buildEmbeddingSource({
-      date: entryRow.date as string,
-      day: entryRow.day as number,
-      emotions: entryRow.emotions as number,
-      energy: entryRow.energy as number,
-      body: entryRow.body as number,
-      delight: entryRow.delight as number,
-      meaning: entryRow.meaning as number,
-      somethingGood: entryRow.something_good as boolean,
-      somethingHard: entryRow.something_hard as boolean,
+      date: strapiEntry.date,
+      day: strapiEntry.day,
+      emotions: strapiEntry.emotions,
+      energy: strapiEntry.energy,
+      body: strapiEntry.body,
+      delight: strapiEntry.delight,
+      meaning: strapiEntry.meaning,
+      somethingGood: strapiEntry.somethingGood,
+      somethingHard: strapiEntry.somethingHard,
       noteText,
     });
     const vec = await embedText(embeddingSource);
     await supabase
-      .from('entries')
-      .update({ embedding_source: embeddingSource, embedding: `[${vec.join(',')}]` })
-      .eq('id', entryRow.id as string);
+      .from('entry_embeddings')
+      .upsert(
+        {
+          user_id: userId,
+          date: strapiEntry.date,
+          strapi_document_id: strapiEntry.documentId,
+          embedding_source: embeddingSource,
+          embedding: `[${vec.join(',')}]`,
+        },
+        { onConflict: 'user_id,date' },
+      );
   } catch (e) {
     console.warn('embedding update failed:', (e as Error).message);
   }
 
   return jsonResponse(
     {
-      entry: {
-        dateIso: entryRow.date,
-        day: entryRow.day,
-        emotions: entryRow.emotions,
-        energy: entryRow.energy,
-        body: entryRow.body,
-        delight: entryRow.delight,
-        meaning: entryRow.meaning,
-        somethingGood: entryRow.something_good,
-        somethingHard: entryRow.something_hard,
-        createdAtIso: entryRow.created_at,
-      },
+      entry: strapiToWire(strapiEntry),
       note: noteOut,
     },
     200,
