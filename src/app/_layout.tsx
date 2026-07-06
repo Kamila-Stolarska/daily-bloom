@@ -13,8 +13,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 
+import { PostHogProvider } from 'posthog-react-native';
+
 import '../global.css';
 import { useStore } from '../lib/store';
+import { identify, posthog, resetAnalytics, track } from '../lib/analytics';
 
 function AuthGate() {
   const router = useRouter();
@@ -27,6 +30,21 @@ function AuthGate() {
   useEffect(() => {
     if (!hydrated) void hydrate();
   }, [hydrated, hydrate]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (authed && name) {
+      identify(useStore.getState().userId, { name });
+    } else if (!authed) {
+      resetAnalytics();
+    }
+  }, [hydrated, authed, name]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const path = '/' + segments.join('/');
+    track('$screen', { $screen_name: segments[0] || 'home', path });
+  }, [hydrated, segments]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -62,7 +80,7 @@ export default function RootLayout() {
     return <View className="flex-1 bg-paper" />;
   }
 
-  return (
+  const tree = (
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <AuthGate />
@@ -75,4 +93,6 @@ export default function RootLayout() {
       />
     </SafeAreaProvider>
   );
+
+  return posthog ? <PostHogProvider client={posthog}>{tree}</PostHogProvider> : tree;
 }

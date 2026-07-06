@@ -20,6 +20,8 @@ import { FlowerChrome } from '../components/FlowerChrome';
 import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
 import { ChatBar } from '../components/chat/ChatBar';
+import { TherapistPicker } from '../components/chat/TherapistPicker';
+import { useTherapists } from '../lib/chat/useTherapists';
 
 function greeting(name: string): string {
   const h = new Date().getHours();
@@ -109,6 +111,8 @@ export default function Home() {
   const { width: winW, height: winH } = useWindowDimensions();
   const [flowerBox, setFlowerBox] = useState({ w: 0, h: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const therapists = useTherapists();
   const signOut = useStore((s) => s.signOut);
 
   // Responsywne skale
@@ -160,15 +164,38 @@ export default function Home() {
         {/* Top label */}
         <View className="flex-row items-center justify-between">
           <Text variant="eyebrow">DAILY — BLOOM</Text>
-          <Pressable
-            onPress={() => setMenuOpen(true)}
-            accessibilityLabel="Menu"
-            hitSlop={10}
-          >
-            <View className="w-5 h-5 rounded-full bg-ink items-center justify-center">
-              <View className="w-1.5 h-1.5 rounded-full bg-paper" />
-            </View>
-          </Pressable>
+          <View className="flex-row items-center" style={{ gap: 12 }}>
+            <Pressable
+              onPress={() => setShopOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Sklep z terapeutami"
+              hitSlop={8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#E1D8CE',
+                backgroundColor: '#FBFAF1',
+              }}
+            >
+              <Text style={{ fontSize: 11, marginRight: 5, color: '#1A1614' }}>{'\u2726\uFE0E'}</Text>
+              <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+                SKLEP
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setMenuOpen(true)}
+              accessibilityLabel="Menu"
+              hitSlop={10}
+            >
+              <View className="w-5 h-5 rounded-full bg-ink items-center justify-center">
+                <View className="w-1.5 h-1.5 rounded-full bg-paper" />
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         {/* Hero — responsywny headline */}
@@ -426,6 +453,16 @@ export default function Home() {
 
       <ChatBar />
 
+      <TherapistPicker
+        visible={shopOpen}
+        onClose={() => setShopOpen(false)}
+        catalog={therapists.catalog}
+        activeId={therapists.activeId}
+        onSelect={(id) => void therapists.setActive(id)}
+        onRestore={() => void therapists.restore()}
+        loading={therapists.loading}
+      />
+
       <Modal
         visible={menuOpen}
         transparent
@@ -454,6 +491,20 @@ export default function Home() {
               borderColor: '#E2E2D2',
             }}
           >
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                setShopOpen(true);
+              }}
+              style={({ pressed }) => ({
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                backgroundColor: pressed ? '#EDEDDD' : 'transparent',
+              })}
+            >
+              <Text variant="bodyMedium">Sklep z terapeutami</Text>
+            </Pressable>
+            <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
             <Pressable
               onPress={() => {
                 setMenuOpen(false);

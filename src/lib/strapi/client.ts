@@ -1,8 +1,11 @@
 // Niskopoziomowy klient Strapi REST API (v5).
-// Konfiguracja przez env: EXPO_PUBLIC_STRAPI_URL + EXPO_PUBLIC_STRAPI_TOKEN.
+// UWAGA: token do Strapi (STRAPI_TOKEN) NIE jest ekspozywany do klienta —
+// treści blogowe idą przez proxy /api/posts po stronie Vercela. Tutaj trzymamy
+// tylko publiczny URL Strapi (potrzebny do rozwiązywania URL-i mediów).
+//
+// Konfiguracja przez env: EXPO_PUBLIC_STRAPI_URL (publiczna baza mediów).
 
 const RAW_BASE = process.env.EXPO_PUBLIC_STRAPI_URL ?? '';
-const TOKEN = process.env.EXPO_PUBLIC_STRAPI_TOKEN ?? '';
 
 export const STRAPI_BASE = RAW_BASE.replace(/\/$/, '');
 
@@ -49,10 +52,7 @@ export async function strapiGet<T>(path: string, params?: Record<string, string 
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
   }
 
-  const headers: Record<string, string> = { accept: 'application/json' };
-  if (TOKEN) headers.authorization = `Bearer ${TOKEN}`;
-
-  const res = await fetch(url.toString(), { headers });
+  const res = await fetch(url.toString(), { headers: { accept: 'application/json' } });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`strapi-${res.status}: ${body.slice(0, 200)}`);

@@ -25,7 +25,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["RECORD_AUDIO", "CAMERA", "READ_MEDIA_IMAGES"]
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "output": "single",
@@ -56,7 +60,8 @@
           "photosPermission": "Daily Bloom potrzebuje dostępu do galerii, żeby przypiąć zdjęcia do notatki.",
           "cameraPermission": "Daily Bloom używa aparatu, żeby dodać zdjęcia do Twojej notatki."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
