@@ -1,12 +1,12 @@
 // /blog — lista postów z Strapi CMS. Read-only z perspektywy aplikacji.
 
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Text } from '../components/ui/text';
 import { listPosts, type StrapiPost } from '../lib/strapi/posts';
-import { strapiMediaUrl, STRAPI_BASE } from '../lib/strapi/client';
+import { strapiMediaUrl } from '../lib/strapi/client';
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -22,8 +22,6 @@ function excerpt(content: string, n = 140): string {
 export default function Blog() {
   const [posts, setPosts] = useState<StrapiPost[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
   const load = useCallback(async () => {
     setError(null);
     try {
@@ -38,12 +36,6 @@ export default function Blog() {
 
   useEffect(() => {
     void load();
-  }, [load]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
   }, [load]);
 
   if (posts === null && !error) {
@@ -62,22 +54,15 @@ export default function Blog() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={{ fontSize: 16 }}>← Wstecz</Text>
         </Pressable>
-        <Pressable onPress={() => void load()} hitSlop={12}>
-          <Text style={{ fontSize: 14, opacity: 0.6 }}>Odśwież</Text>
-        </Pressable>
       </View>
 
       <FlatList
         data={posts ?? []}
         keyExtractor={(p) => String(p.id)}
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View style={{ marginBottom: 24 }}>
-            <Text variant="h1" style={{ marginBottom: 8 }}>Blog</Text>
-            <Text style={{ opacity: 0.6, fontSize: 14 }}>
-              {STRAPI_BASE ? `źródło: ${STRAPI_BASE}` : 'CMS nie skonfigurowany'}
-            </Text>
+            <Text variant="h1">Blog</Text>
           </View>
         }
         ListEmptyComponent={
