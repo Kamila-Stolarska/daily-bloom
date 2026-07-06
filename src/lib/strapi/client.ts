@@ -1,7 +1,6 @@
 // Niskopoziomowy klient Strapi REST API (v5).
-// UWAGA: token do Strapi (STRAPI_TOKEN) NIE jest ekspozywany do klienta —
-// treści blogowe idą przez proxy /api/posts po stronie Vercela. Tutaj trzymamy
-// tylko publiczny URL Strapi (potrzebny do rozwiązywania URL-i mediów).
+// UWAGA: token do Strapi (STRAPI_TOKEN) NIE jest ekspozywany do klienta.
+// Tutaj trzymamy tylko publiczny URL Strapi (potrzebny do rozwiązywania URL-i mediów).
 //
 // Konfiguracja przez env: EXPO_PUBLIC_STRAPI_URL (publiczna baza mediów).
 

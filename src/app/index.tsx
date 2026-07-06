@@ -522,20 +522,6 @@ export default function Home() {
             <Pressable
               onPress={() => {
                 setMenuOpen(false);
-                router.push('/blog');
-              }}
-              style={({ pressed }) => ({
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                backgroundColor: pressed ? '#EDEDDD' : 'transparent',
-              })}
-            >
-              <Text variant="bodyMedium">Blog</Text>
-            </Pressable>
-            <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
                 router.push('/docs');
               }}
               style={({ pressed }) => ({
