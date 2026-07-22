@@ -16,6 +16,8 @@ type Props = {
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
+  animate?: boolean;
+  bloomKey?: string | number;
 };
 
 export function FlowerLazy(props: Props) {

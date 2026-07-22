@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-160 -100 320 320" width="320" height="320">
+  <style>
+    .out { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .thin { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+  </style>
+  <defs>
+    <path id="cloudPath" d="M -130,40 Q -110,46 -80,42 Q -40,48 0,42 Q 40,48 80,42 Q 110,46 130,40 C 148,20 138,-8 118,-10 C 128,-42 90,-62 62,-48 C 55,-72 15,-78 -10,-58 C -25,-80 -70,-72 -78,-48 C -108,-58 -140,-38 -128,-12 C -148,-4 -148,28 -130,40 Z" />
+    <clipPath id="cc"><use href="#cloudPath" /></clipPath>
+    <clipPath id="snowClip"><rect x="-90" y="55" width="180" height="150" /></clipPath>
+    <g id="sf" class="out"><path d="M 0,-11 L 0,11 M -9.5,-5.5 L 9.5,5.5 M -9.5,5.5 L 9.5,-5.5" /></g>
+    <g id="sfS" class="out"><path d="M 0,-9 L 0,9 M -8,-4.5 L 8,4.5 M -8,4.5 L 8,-4.5" /></g>
+  </defs>
+  <g clip-path="url(#cc)">
+    <g class="thin">
+      <path d="M -160,-70 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-60 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-50 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-40 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,-10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,0 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      <path d="M -160,30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+    </g>
+  </g>
+  <use href="#cloudPath" class="out" />
+  <g clip-path="url(#snowClip)">
+    <g><use href="#sf" /><animateTransform attributeName="transform" type="translate" values="-60,55; -60,210" dur="3.5s" repeatCount="indefinite" /><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" additive="sum" repeatCount="indefinite" /></g>
+    <g><use href="#sf" /><animateTransform attributeName="transform" type="translate" values="-15,55; -15,210" dur="4s" begin="0.6s" repeatCount="indefinite" /><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="5s" additive="sum" repeatCount="indefinite" /></g>
+    <g><use href="#sf" /><animateTransform attributeName="transform" type="translate" values="30,55; 30,210" dur="3.8s" begin="1.2s" repeatCount="indefinite" /><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4.5s" additive="sum" repeatCount="indefinite" /></g>
+    <g><use href="#sfS" /><animateTransform attributeName="transform" type="translate" values="-40,55; -40,210" dur="4.2s" begin="0.3s" repeatCount="indefinite" /><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="6s" additive="sum" repeatCount="indefinite" /></g>
+    <g><use href="#sfS" /><animateTransform attributeName="transform" type="translate" values="15,55; 15,210" dur="3.6s" begin="1.8s" repeatCount="indefinite" /><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="5s" additive="sum" repeatCount="indefinite" /></g>
+  </g>
+</svg>

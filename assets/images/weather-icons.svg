@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 340" width="1800" height="340">
+  <rect width="1800" height="340" fill="#000000" />
+  <defs>
+    <style>
+      .out { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+      .fill { fill: #ffffff; }
+      .label { fill: #ffffff; font-family: Georgia, serif; font-size: 14px; font-style: italic; opacity: 0.7; }
+    </style>
+
+    <!-- CLOUD: bumpy multi-hump top, flat wavy bottom -->
+    <path id="cloudPath" d="
+      M -130,40
+      Q -110,46 -80,42
+      Q -40,48 0,42
+      Q 40,48 80,42
+      Q 110,46 130,40
+      C 148,20 138,-8 118,-10
+      C 128,-42 90,-62 62,-48
+      C 55,-72 15,-78 -10,-58
+      C -25,-80 -70,-72 -78,-48
+      C -108,-58 -140,-38 -128,-12
+      C -148,-4 -148,28 -130,40
+      Z" />
+
+    <clipPath id="cloudClip">
+      <use href="#cloudPath" />
+    </clipPath>
+
+    <!-- Dense wavy fill lines — clipped to cloud shape -->
+    <g id="cloudWaves" clip-path="url(#cloudClip)">
+      <g class="thin">
+        <path d="M -160,-70 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-60 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-50 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-40 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,-10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,0 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        <path d="M -160,30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+      </g>
+    </g>
+
+    <g id="cloud">
+      <use href="#cloudWaves" />
+      <use href="#cloudPath" class="out" />
+    </g>
+
+    <g id="sun">
+      <circle class="fill" cx="0" cy="0" r="34" />
+      <g class="out">
+        <path d="M 0,-40 q -6,-14 0,-28 t 0,-24" />
+        <path d="M 0,40  q  6, 14 0, 28 t 0, 24" />
+        <path d="M -40,0 q -14,6 -28,0 t -24,0" />
+        <path d="M  40,0 q  14,-6 28,0 t  24,0" />
+        <path d="M -28,-28 q -14,-4 -22,-14 t -16,-16" />
+        <path d="M  28,-28 q  14,-4 22,-14 t  16,-16" />
+        <path d="M -28, 28 q -14, 4 -22, 14 t -16, 16" />
+        <path d="M  28, 28 q  14, 4 22, 14 t  16, 16" />
+      </g>
+    </g>
+  </defs>
+
+  <g transform="translate(150,160)">
+    <g>
+      <use href="#sun" />
+      <animateTransform attributeName="transform" type="rotate"
+        from="0" to="360" dur="30s" repeatCount="indefinite" />
+    </g>
+  </g>
+  <text class="label" x="150" y="310" text-anchor="middle">słońce</text>
+
+  <g transform="translate(450,160)">
+    <g transform="translate(-50,-40)">
+      <g transform="scale(0.65)">
+        <use href="#sun" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="360" dur="30s" repeatCount="indefinite" />
+      </g>
+    </g>
+    <g>
+      <g transform="translate(0,10) scale(0.85)"><use href="#cloud" /></g>
+      <animateTransform attributeName="transform" type="translate"
+        values="0,0; 6,0; 0,0; -6,0; 0,0" dur="6s" repeatCount="indefinite" />
+    </g>
+  </g>
+  <text class="label" x="450" y="310" text-anchor="middle">słońce za chmurką</text>
+
+  <g transform="translate(750,150)">
+    <use href="#cloud" />
+    <animateTransform attributeName="transform" type="translate"
+      values="750,150; 758,150; 750,150; 742,150; 750,150" dur="6s" repeatCount="indefinite" />
+  </g>
+  <text class="label" x="750" y="310" text-anchor="middle">chmurka</text>
+
+  <g transform="translate(1050,130)">
+    <use href="#cloud" />
+    <defs>
+      <clipPath id="rainClip">
+        <rect x="-90" y="55" width="180" height="105" />
+      </clipPath>
+      <path id="drop" d="M 0,0 q -6,10 0,18 q 6,-8 0,-18 Z" />
+    </defs>
+    <g class="fill" clip-path="url(#rainClip)">
+      <g transform="translate(-70,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-70,55; -70,165" dur="1.1s" repeatCount="indefinite" />
+      </g>
+      <g transform="translate(-30,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-30,55; -30,165" dur="1.3s" begin="0.4s" repeatCount="indefinite" />
+      </g>
+      <g transform="translate(10,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="10,55; 10,165" dur="1.0s" begin="0.2s" repeatCount="indefinite" />
+      </g>
+      <g transform="translate(50,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="50,55; 50,165" dur="1.2s" begin="0.6s" repeatCount="indefinite" />
+      </g>
+      <g transform="translate(-50,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-50,55; -50,165" dur="1.4s" begin="0.8s" repeatCount="indefinite" />
+      </g>
+      <g transform="translate(30,55)">
+        <use href="#drop" />
+        <animateTransform attributeName="transform" type="translate"
+          values="30,55; 30,165" dur="1.15s" begin="0.5s" repeatCount="indefinite" />
+      </g>
+    </g>
+  </g>
+  <text class="label" x="1050" y="310" text-anchor="middle">chmurka z deszczem</text>
+
+  <g transform="translate(1350,130)">
+    <use href="#cloud" />
+    <path class="fill" d="M 10,55 L -20,110 L -2,110 L -18,150 L 22,92 L 4,92 L 20,55 Z">
+      <animate attributeName="opacity"
+        values="1; 1; 0; 0; 1; 0; 1; 1"
+        keyTimes="0; 0.35; 0.4; 0.5; 0.55; 0.6; 0.65; 1"
+        dur="2.2s" repeatCount="indefinite" />
+    </path>
+  </g>
+  <text class="label" x="1350" y="310" text-anchor="middle">chmurka z błyskawicą</text>
+
+  <g transform="translate(1650,130)">
+    <use href="#cloud" />
+    <defs>
+      <clipPath id="snowClip">
+        <rect x="-90" y="55" width="180" height="105" />
+      </clipPath>
+      <g id="snowflake" class="out">
+        <path d="M 0,-11 L 0,11 M -9.5,-5.5 L 9.5,5.5 M -9.5,5.5 L 9.5,-5.5" />
+      </g>
+      <g id="snowflakeSmall" class="out">
+        <path d="M 0,-9 L 0,9 M -8,-4.5 L 8,4.5 M -8,4.5 L 8,-4.5" />
+      </g>
+    </defs>
+    <g clip-path="url(#snowClip)">
+      <g>
+        <use href="#snowflake" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-60,55; -60,165" dur="3.5s" repeatCount="indefinite" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="360" dur="4s" additive="sum" repeatCount="indefinite" />
+      </g>
+      <g>
+        <use href="#snowflake" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-15,55; -15,165" dur="4s" begin="0.6s" repeatCount="indefinite" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="-360" dur="5s" additive="sum" repeatCount="indefinite" />
+      </g>
+      <g>
+        <use href="#snowflake" />
+        <animateTransform attributeName="transform" type="translate"
+          values="30,55; 30,165" dur="3.8s" begin="1.2s" repeatCount="indefinite" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="360" dur="4.5s" additive="sum" repeatCount="indefinite" />
+      </g>
+      <g>
+        <use href="#snowflakeSmall" />
+        <animateTransform attributeName="transform" type="translate"
+          values="-40,55; -40,165" dur="4.2s" begin="0.3s" repeatCount="indefinite" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="-360" dur="6s" additive="sum" repeatCount="indefinite" />
+      </g>
+      <g>
+        <use href="#snowflakeSmall" />
+        <animateTransform attributeName="transform" type="translate"
+          values="15,55; 15,165" dur="3.6s" begin="1.8s" repeatCount="indefinite" />
+        <animateTransform attributeName="transform" type="rotate"
+          from="0" to="360" dur="5s" additive="sum" repeatCount="indefinite" />
+      </g>
+    </g>
+  </g>
+  <text class="label" x="1650" y="310" text-anchor="middle">chmurka ze śniegiem</text>
+</svg>

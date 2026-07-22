@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-180 -140 360 280" width="360" height="280">
+  <style>
+    .out { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .thin { fill: none; stroke: #ffffff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+    .fill { fill: #ffffff; }
+  </style>
+  <defs>
+    <path id="cloudPath" d="M -130,40 Q -110,46 -80,42 Q -40,48 0,42 Q 40,48 80,42 Q 110,46 130,40 C 148,20 138,-8 118,-10 C 128,-42 90,-62 62,-48 C 55,-72 15,-78 -10,-58 C -25,-80 -70,-72 -78,-48 C -108,-58 -140,-38 -128,-12 C -148,-4 -148,28 -130,40 Z" />
+    <clipPath id="cc"><use href="#cloudPath" /></clipPath>
+    <g id="sun">
+      <circle class="fill" cx="0" cy="0" r="34" />
+      <g class="out">
+        <path d="M 0,-40 q -6,-14 0,-28 t 0,-24" />
+        <path d="M 0,40  q  6, 14 0, 28 t 0, 24" />
+        <path d="M -40,0 q -14,6 -28,0 t -24,0" />
+        <path d="M  40,0 q  14,-6 28,0 t  24,0" />
+        <path d="M -28,-28 q -14,-4 -22,-14 t -16,-16" />
+        <path d="M  28,-28 q  14,-4 22,-14 t  16,-16" />
+        <path d="M -28, 28 q -14, 4 -22, 14 t -16, 16" />
+        <path d="M  28, 28 q  14, 4 22, 14 t  16, 16" />
+      </g>
+    </g>
+    <g id="cloud">
+      <g clip-path="url(#cc)">
+        <g class="thin">
+          <path d="M -160,-70 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-60 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-50 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-40 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,-10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,0 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,10 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,20 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+          <path d="M -160,30 q 8,-5 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0" />
+        </g>
+      </g>
+      <use href="#cloudPath" class="out" />
+    </g>
+  </defs>
+
+  <g transform="translate(-50,-40)">
+    <g transform="scale(0.65)">
+      <use href="#sun" />
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="30s" repeatCount="indefinite" />
+    </g>
+  </g>
+  <g>
+    <g transform="translate(0,10) scale(0.85)"><use href="#cloud" /></g>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 6,0; 0,0; -6,0; 0,0" dur="6s" repeatCount="indefinite" />
+  </g>
+</svg>

@@ -14,12 +14,16 @@ export type Palette = {
 export const PALETTES: readonly Palette[] = [
   {
     // Inspirowana referencją użytkownika: korale, róż, pomarańcz + chłodny turkus/lila.
+    // Kolejność dobrana tak, żeby sąsiadujące płatki (60° apart) miały maksymalnie
+    // różny odcień — oba chłodne kolory (turkus, lila) rozstawione naprzeciw siebie,
+    // ciepłe kolory poprzeplatane ciemny/jasny, żeby żaden płatek nie "zlewał się"
+    // z sąsiadem (feedback: te same 6 kolorów, ale każdy wyraźnie inny).
     name: 'Akwarela',
     bg: '#F5EFE4',
     aura: '#E8B85C',
     shadow: '#3A1F1A',
     pestil: '#7A2E3B',
-    petals: ['#E8523C', '#F08A6B', '#D63D5A', '#F2B07A', '#7BA9A3', '#B58AC0'],
+    petals: ['#7BA9A3', '#E8523C', '#F2B07A', '#B58AC0', '#D63D5A', '#F08A6B'],
   },
   {
     name: 'Świt',

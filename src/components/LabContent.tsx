@@ -1,8 +1,9 @@
-// Lab — porównanie dwóch wariantów legendy kwiatka.
+// Lab — porównanie wariantów stylu kwiatka.
 
+import type { ReactElement } from 'react';
 import { ScrollView, View } from 'react-native';
 import { OrganicFlower } from './OrganicFlower';
-import { FlowerChrome } from './FlowerChrome';
+import { SoftBloomFlower, WatercolorBleedFlower } from './FlowerVariants';
 import { DayData } from '../lib/flower/types';
 import { Text } from './ui/text';
 
@@ -31,14 +32,21 @@ const HERO_DAY: DayData = {
 const DNA_SEED = 1234567;
 const SIZE = 320;
 
+type FlowerRender = (props: {
+  dna: typeof HERO_DNA;
+  day: DayData;
+  size: number;
+  dnaSeed: number;
+}) => ReactElement;
+
 function Variant({
   label,
   caption,
-  showGrid,
+  Render,
 }: {
   label: string;
   caption: string;
-  showGrid: boolean;
+  Render: FlowerRender;
 }) {
   return (
     <View className="items-center" style={{ marginBottom: 40 }}>
@@ -46,14 +54,7 @@ function Variant({
         {label}
       </Text>
       <View style={{ width: SIZE, height: SIZE, position: 'relative' }}>
-        <OrganicFlower
-          dna={HERO_DNA}
-          day={HERO_DAY}
-          size={SIZE}
-          dnaSeed={DNA_SEED}
-          animate={false}
-        />
-        <FlowerChrome size={SIZE} rotationOffset={HERO_DNA.rotationOffset} showGrid={showGrid} />
+        <Render dna={HERO_DNA} day={HERO_DAY} size={SIZE} dnaSeed={DNA_SEED} />
       </View>
       <Text variant="caption" tone="muted" style={{ marginTop: 12, textAlign: 'center' }}>
         {caption}
@@ -66,22 +67,28 @@ export default function LabContent() {
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 60 }}>
       <Text variant="h2" style={{ marginBottom: 4 }}>
-        Legenda kwiatka
+        Style kwiatka
       </Text>
       <Text variant="caption" tone="muted" style={{ marginBottom: 28 }}>
-        dwa warianty do porównania
+        obecny + dwa nowe warianty wg inspiracji
       </Text>
 
       <Variant
-        label="WARIANT 1 — SIATKA + ETYKIETY"
-        caption="pełna data-viz: pierścienie skali 1–5 i 6 promieni"
-        showGrid={true}
+        label="OBECNY — ORGANIC"
+        caption="teardrop-płatki, gradient tip→base, delikatny grain"
+        Render={(p) => <OrganicFlower {...p} grain animate={false} />}
       />
 
       <Variant
-        label="WARIANT 2 — SAME ETYKIETY"
-        caption="lżejsza wersja — bez siatki, kwiatek nadal pływa"
-        showGrid={false}
+        label="A — SOFT BLOOM"
+        caption="1:1 z flower.svg — białe płatki + gradient lime→orange, różowy blur w środku"
+        Render={(p) => <SoftBloomFlower {...p} />}
+      />
+
+      <Variant
+        label="B — WATERCOLOR BLEED"
+        caption="krzyżujące się przezroczyste płatki + mocny grain, warm palette"
+        Render={(p) => <WatercolorBleedFlower {...p} />}
       />
     </ScrollView>
   );

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kwiatek powitalny (ekran /auth) — wyeksportowany 1:1 z żywego renderu
+  MiniFlower (src/components/MiniFlower.tsx), DNA seed "witaj-w-daily-bloom",
+  paleta "Akwarela" (src/lib/flower/palettes.ts).
+
+  Każdy płatek to osobna grupa <g> z transform="rotate(...)" wokół środka
+  (105,105) — można edytować/przesuwać/przekolorować pojedynczy płatek bez
+  ruszania reszty. Kolejność płatków = kolejność osi [Dzień, Emocje, Energia,
+  Ciało, Zachwyt, Sens].
+-->
+<svg width="210" height="210" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <!-- Dzień -->
+    <g transform="translate(105, 105) rotate(12.278687972575426)">
+      <path d="M 0 0 C -23.774415592954256 -17.74806307724118, -16.65173948735596 -74.2511641563624, 0 -100.8 C 18.55897574343022 -62.75296641672045, 22.096018264641618 -21.895143268838524, 0 0 Z" fill="#7BA9A3"/>
+    </g>
+    <!-- Emocje -->
+    <g transform="translate(105, 105) rotate(85.27966908924282)">
+      <path d="M 0 0 C -26.14409852155394 -21.964504776880148, -21.877357285862594 -74.49555510469526, 0 -100.8 C 17.2127253649172 -66.92916594949901, 26.148555123427606 -20.030928661398587, 0 0 Z" fill="#E8523C"/>
+    </g>
+    <!-- Energia -->
+    <g transform="translate(105, 105) rotate(142.98481682268903)">
+      <path d="M 0 0 C -23.520317167296728 -14.458958116605876, -17.249283525221568 -68.55274029538035, 0 -100.8 C 16.222791750973624 -63.96157068365144, 24.61167495509708 -19.279184489049015, 0 0 Z" fill="#F2B07A"/>
+    </g>
+    <!-- Ciało -->
+    <g transform="translate(105, 105) rotate(197.93645403767005)">
+      <path d="M 0 0 C -24.673021440182488 -12.184881277441978, -14.447249839265103 -73.10365388792754, 0 -100.8 C 14.217002492816677 -64.09161761331177, 21.43378891270408 -13.544852742165325, 0 0 Z" fill="#B58AC0"/>
+    </g>
+    <!-- Zachwyt -->
+    <g transform="translate(105, 105) rotate(264.26892095897347)">
+      <path d="M 0 0 C -23.89685607091733 -19.41202802988142, -13.687499425874904 -69.3448826084286, 0 -100.8 C 15.180218584827742 -72.8468823532401, 22.041998235004158 -19.45201296488196, 0 0 Z" fill="#D63D5A"/>
+    </g>
+    <!-- Sens -->
+    <g transform="translate(105, 105) rotate(325.738126241602)">
+      <path d="M 0 0 C -22.993258125625374 -12.850484946392477, -14.403744155446928 -76.4821099502854, 0 -100.8 C 16.014063543629458 -70.01462748828018, 23.04159962149401 -22.107359087191522, 0 0 Z" fill="#F08A6B"/>
+    </g>
+  </g>
+</svg>

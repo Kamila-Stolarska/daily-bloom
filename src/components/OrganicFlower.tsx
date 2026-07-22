@@ -34,6 +34,9 @@ type Props = {
   outlineWidth?: number;
   /** Wyłącz animację rozkwitania (np. w stats, kiedy zmieniamy dużo na raz). */
   animate?: boolean;
+  /** Dodatkowy klucz wymuszający ponowne rozkwitnięcie (np. przy przełączaniu okna
+   *  czasowego w statsach — nawet gdy wartości osi się nie zmieniają liczbowo). */
+  bloomKey?: string | number;
 };
 
 const scaleToUnit = (v: number) => (v - 1) / 4;
@@ -103,7 +106,7 @@ function petalTransform(petal: PetalRender, index: number, cx: number, cy: numbe
 export const OrganicFlower = React.memo(function OrganicFlower({
   dna, day, size, dnaSeed, grain = false,
   outline = false, outlineColor = '#E1D8CE', outlineWidth = 1,
-  animate = true,
+  animate = true, bloomKey,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
   const cx = size / 2;
@@ -149,7 +152,7 @@ export const OrganicFlower = React.memo(function OrganicFlower({
 
   const progress = useBloomProgress(animate, [
     dnaSeed, day.day, day.energy, day.body, day.delight, day.meaning, day.emotions,
-    day.dateIso, outline,
+    day.dateIso, outline, bloomKey,
   ]);
 
   if (outline) {

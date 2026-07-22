@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-150 -150 300 300" width="300" height="300">
+  <style>
+    .out { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .fill { fill: #ffffff; }
+  </style>
+  <g>
+    <circle class="fill" cx="0" cy="0" r="34" />
+    <g class="out">
+      <path d="M 0,-40 q -6,-14 0,-28 t 0,-24" />
+      <path d="M 0,40  q  6, 14 0, 28 t 0, 24" />
+      <path d="M -40,0 q -14,6 -28,0 t -24,0" />
+      <path d="M  40,0 q  14,-6 28,0 t  24,0" />
+      <path d="M -28,-28 q -14,-4 -22,-14 t -16,-16" />
+      <path d="M  28,-28 q  14,-4 22,-14 t  16,-16" />
+      <path d="M -28, 28 q -14, 4 -22, 14 t -16, 16" />
+      <path d="M  28, 28 q  14, 4 22, 14 t  16, 16" />
+    </g>
+    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="30s" repeatCount="indefinite" />
+  </g>
+</svg>
