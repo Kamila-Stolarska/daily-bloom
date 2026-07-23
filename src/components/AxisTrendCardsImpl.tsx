@@ -36,7 +36,7 @@ type Props = {
   periodLabel: string;
 };
 
-const CORAL = '#DD6181';
+const CORAL = '#FDA674'; // ten sam kolor co gradient kwiatka (pomarańczowy koniec)
 const INK = '#1A1614';
 const MUTED = '#7A6F62';
 const CARD_BG = '#FBFAF1';
@@ -67,7 +67,7 @@ function computeStats(series: Point[]): Stats | null {
 
 type Selected = { card: number; idx: number };
 
-export function AxisTrendCardsImpl({ cells, width, periodLabel: _periodLabel }: Props) {
+export function AxisTrendCardsImpl({ cells, width, periodLabel }: Props) {
   const chartW = width - CARD_PAD * 2;
   const cardInnerH = HEADER_H + GAP1 + CHART_H + XLABELS_H;
   const cardH = cardInnerH + CARD_PAD * 2;
@@ -150,7 +150,7 @@ export function AxisTrendCardsImpl({ cells, width, periodLabel: _periodLabel }: 
                   </Text>
                 </View>
                 <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
-                  {stats ? 'średnia z okresu' : 'brak wpisów'}
+                  {stats ? `średnia ${periodLabel}` : 'brak wpisów'}
                 </Text>
               </View>
             </View>
@@ -219,7 +219,7 @@ export function AxisTrendCardsImpl({ cells, width, periodLabel: _periodLabel }: 
                   <LinearGradient
                     start={vec(0, 0)}
                     end={vec(0, CHART_H)}
-                    colors={['rgba(221,97,129,0.32)', 'rgba(221,97,129,0)']}
+                    colors={['rgba(253,166,116,0.32)', 'rgba(253,166,116,0)']}
                   />
                 </Path>
                 <Path

@@ -13,38 +13,38 @@ export type AxisQuestion = {
 export const AXIS_QUESTIONS: AxisQuestion[] = [
   {
     axis: 'day',
-    prompt: 'Jak dziś było?',
-    labels: ['Ciężko', 'Trudno', 'Zwyczajnie', 'Dobrze', 'Wyjątkowo'],
+    prompt: 'Jak oceniasz dzisiejszy dzień?',
+    labels: ['Bardzo źle', 'Raczej źle', 'Zwyczajnie', 'Dobrze', 'Wyjątkowo dobrze'],
   },
   {
     axis: 'emotions',
     prompt: 'Jak się dziś czujesz?',
-    micro: 'To, co czujesz w środku — niezależnie od tego, jaki był dzień.',
-    labels: ['Smutno', 'Słabo', 'Spokojnie', 'Dobrze', 'Radośnie'],
+    micro: 'Pomyśl o tym, co czujesz w środku — niezależnie od tego, jak minął Twój dzień.',
+    labels: ['Bardzo smutno', 'Trochę smutno', 'Spokojnie', 'Dobrze', 'Bardzo radośnie'],
   },
   {
     axis: 'energy',
-    prompt: 'Ile miałaś dziś w sobie energii?',
-    micro: 'Twój wewnętrzny zasób — do działania, do bycia, do reagowania.',
-    labels: ['Puste baki', 'Ledwo ledwo', 'Wystarczająco', 'Z zapasem', 'Buzowała w żyłach'],
+    prompt: 'Ile miałaś dziś energii?',
+    micro: 'Pomyśl o swoim wewnętrznym zasobie — do działania, bycia z innymi i reagowania na to, co się wydarzało.',
+    labels: ['Puste baki', 'Ledwo, ledwo', 'Wystarczająco', 'Z zapasem', 'Energia buzowała mi w żyłach'],
   },
   {
     axis: 'body',
     prompt: 'Jak czuło się dziś Twoje ciało?',
-    micro: 'Sen, oddech, napięcia, ruch — na ile było Ci ze sobą dobrze fizycznie.',
-    labels: ['Protestowało', 'Zmęczone', 'Spokojne', 'Lekkie', 'Rozkwitłe'],
+    micro: 'Pomyśl o śnie, oddechu, napięciach i ruchu — na ile dobrze czułaś się dziś fizycznie.',
+    labels: ['Protestowało', 'Było zmęczone', 'Było spokojne', 'Było lekkie', 'Było pełne życia'],
   },
   {
     axis: 'delight',
-    prompt: 'Ile drobnych momentów Cię dziś urzekło?',
-    micro: 'Małe rzeczy, które na chwilę Cię zatrzymały — uśmiech, zapach, światło.',
-    labels: ['Żadnego', 'Ledwo jeden', 'Parę drobnych', 'Sporo', 'Cały dzień'],
+    prompt: 'Ile drobnych momentów zachwyciło Cię dzisiaj?',
+    micro: 'Pomyśl o małych rzeczach, które choć na chwilę Cię zatrzymały — uśmiechu, zapachu, świetle.',
+    labels: ['Ani jeden', 'Jeden mały moment', 'Kilka drobnych', 'Całkiem sporo', 'Cały dzień był ich pełen'],
   },
   {
     axis: 'meaning',
-    prompt: 'Czy to, co robiłaś dziś, było dla Ciebie ważne?',
-    micro: 'Coś zgodnego z Tobą — praca nad czymś istotnym, rozmowa, drobna decyzja po swojemu.',
-    labels: ['Wcale', 'Ledwo', 'Trochę', 'Mocno', 'W pełni'],
+    prompt: 'Na ile to, co dziś robiłaś, było dla Ciebie ważne?',
+    micro: 'Pomyśl o tym, co było zgodne z Tobą — pracy nad czymś istotnym, ważnej rozmowie albo drobnej decyzji podjętej po swojemu.',
+    labels: ['Wcale', 'Tylko odrobinę', 'Trochę', 'W dużym stopniu', 'W pełni'],
   },
 ];
 

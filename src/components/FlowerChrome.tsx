@@ -3,16 +3,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text as RNText, View } from 'react-native';
-import { AXES, type Axis } from '../lib/flower/types';
+import { AXES, AXIS_LABELS_PL, type Axis } from '../lib/flower/types';
 
-const LABELS: Record<(typeof AXES)[number], string> = {
-  day: 'DZIEŃ',
-  emotions: 'EMOCJE',
-  energy: 'ENERGIA',
-  body: 'CIAŁO',
-  delight: 'ZACHWYT',
-  meaning: 'SENS',
-};
+const LABELS = AXIS_LABELS_PL;
 
 type Props = {
   size: number;

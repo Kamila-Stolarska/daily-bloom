@@ -44,6 +44,29 @@ export function averageDay(entries: Entry[]): DayData {
   };
 }
 
+// Jak averageDay, ale każda oś = moda (najczęściej wybierana wartość), nie średnia.
+// Spójne z axisDistribution/"Profil okresu" — bez tego kwiatek (średnia) i wstęga
+// (moda) potrafiły pokazywać co innego dla tego samego okresu przy rozkładach
+// dwumodalnych (np. remis 3 i 5 rozjeżdżał się ze średnią 3.3→3).
+export function modeDay(entries: Entry[]): DayData {
+  if (entries.length === 0) {
+    return {
+      day: 3, emotions: 3, energy: 3, body: 3, delight: 3, meaning: 3,
+      somethingGood: false, somethingHard: false,
+    };
+  }
+  let good = 0;
+  let hard = 0;
+  for (const e of entries) {
+    if (e.somethingGood) good++;
+    if (e.somethingHard) hard++;
+  }
+  const n = entries.length;
+  const out = { somethingGood: good * 2 >= n, somethingHard: hard * 2 >= n } as DayData;
+  for (const a of AXES) out[a] = axisDistribution(entries, a).mode;
+  return out;
+}
+
 // Grupowanie po miesiącu (YYYY-MM). Kolejność miesięcy: malejąco (od najnowszego).
 export function groupByMonth(entries: Entry[]): Array<{ month: string; entries: Entry[] }> {
   const buckets = new Map<string, Entry[]>();

@@ -19,3 +19,13 @@ export type DayData = {
 // Kolejność osi dla 6 płatków (4+2). Indeksy zgodne z PALETTES[*].petals.
 export const AXES = ['day', 'emotions', 'energy', 'body', 'delight', 'meaning'] as const;
 export type Axis = (typeof AXES)[number];
+
+// Polskie etykiety osi — te same, co pod kwiatkiem (FlowerChrome).
+export const AXIS_LABELS_PL: Record<Axis, string> = {
+  day: 'DZIEŃ',
+  emotions: 'EMOCJE',
+  energy: 'ENERGIA',
+  body: 'CIAŁO',
+  delight: 'ZACHWYT',
+  meaning: 'SENS',
+};

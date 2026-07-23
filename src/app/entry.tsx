@@ -12,10 +12,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { AXIS_QUESTIONS, NOTE_PROMPTS } from '../lib/questions';
-import { Scale } from '../lib/flower/types';
+import { AXIS_LABELS_PL, Scale } from '../lib/flower/types';
 import { Entry, entryToDayData, todayIso, useStore } from '../lib/store';
 import { deriveDna } from '../lib/flower/dna';
 import { FlowerLazy } from '../components/FlowerLazy';
@@ -208,7 +208,7 @@ export default function EntryScreen() {
   // Force re-render toolbara, gdy edytor Tiptap się zainicjalizuje / zmieni stan formatowania.
   const [, forceTick] = useState(0);
   const [draftHydrated, setDraftHydrated] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // Hydratuj draft z istniejącego wpisu (edycja) tylko raz po hydratacji store
   useEffect(() => {
@@ -223,7 +223,6 @@ export default function EntryScreen() {
         delight: existing.delight,
         meaning: existing.meaning,
       });
-      setIsEditing(true);
     }
     setDraftHydrated(true);
   }, [hydrated, draftHydrated, entries, targetDate]);
@@ -331,7 +330,7 @@ export default function EntryScreen() {
 
         <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 40, paddingBottom: 32 }}>
           <AxisContent key={step.index}>
-            <Text variant="eyebrow">{q.axis.toUpperCase()}</Text>
+            <Text variant="eyebrow">{AXIS_LABELS_PL[q.axis]}</Text>
             <Text variant="h1" className="mt-4">
               {q.prompt}
             </Text>
@@ -364,33 +363,34 @@ export default function EntryScreen() {
   // ---- BLOOM ----
   if (step.kind === 'bloom' && savedEntry) {
     return (
-      <SafeAreaView className="flex-1 bg-paper">
+      <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
         <TopBar left={<Text variant="eyebrow">ZAKWITŁO</Text>} />
-        <View className="flex-1 items-center justify-center px-6">
-          <View style={{ width: 340, height: 340 }} className="items-center justify-center">
-            <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
-            <FlowerChrome
-              size={340}
-              rotationOffset={dna.rotationOffset}
-              pad={40}
-              revealKey={savedEntry.date}
-            />
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+          <View className="flex-1 items-center justify-center px-6" style={{ minHeight: 360 }}>
+            <View style={{ width: 340, height: 340 }} className="items-center justify-center">
+              <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
+              <FlowerChrome
+                size={340}
+                rotationOffset={dna.rotationOffset}
+                pad={40}
+                revealKey={savedEntry.date}
+              />
+            </View>
+            <Text
+              variant="h2"
+              className="text-center mt-10"
+              style={{ fontSize: 36, lineHeight: 40, letterSpacing: -1 }}
+            >
+              {name ? `${name}, oto Twój dzień.` : 'Oto Twój dzień.'}
+            </Text>
           </View>
-          <Text
-            variant="h2"
-            className="text-center mt-10"
-            style={{ fontSize: 36, lineHeight: 40, letterSpacing: -1 }}
-          >
-            {name ? `${name}, oto Twój dzień.` : 'Oto Twój dzień.'}
-          </Text>
-        </View>
-        <View className="px-6 pb-10">
-          {isEditing ? (
-            <Button variant="pill" label="gotowe" onPress={() => router.replace('/')} />
-          ) : (
-            <Button variant="pill" label="dopisz coś od siebie" onPress={() => setStep({ kind: 'note' })} />
-          )}
-        </View>
+          <View className="px-6" style={{ paddingBottom: Math.max(40, insets.bottom + 24), paddingTop: 24 }}>
+            <Button variant="pill" label="dopisz notatkę" onPress={() => setStep({ kind: 'note' })} />
+            <View className="items-center mt-3">
+              <Button variant="link" label="pomiń" onPress={() => router.replace('/')} />
+            </View>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }

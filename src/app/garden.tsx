@@ -1,8 +1,9 @@
 // Ekran /garden — pakiet wizualizacji: Ogród (galeria), uśredniony kwiatek,
 // trend liniowy 6 osi, kalendarz-heatmapa, podsumowanie tagów, chmura słów.
 
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -10,8 +11,8 @@ import { useStore, todayIso } from '../lib/store';
 import { deriveDna } from '../lib/flower/dna';
 import { AXES, type DayData } from '../lib/flower/types';
 import {
-  averageDay,
   axisDistribution,
+  modeDay,
   axisSeries,
   filterByWindow,
   streakDays,
@@ -29,11 +30,39 @@ import { TagsSummary } from '../components/TagsSummary';
 import { WordCloud } from '../components/WordCloud';
 
 const WINDOWS = [
-  { key: '7', label: '7 dni', days: 7 as const },
-  { key: '30', label: '30 dni', days: 30 as const },
-  { key: '90', label: '90 dni', days: 90 as const },
-  { key: 'all', label: 'cały czas', days: 'all' as const },
+  { key: '7', label: '7 dni', days: 7 as const, genitive: 'z 7 dni' },
+  { key: '30', label: '30 dni', days: 30 as const, genitive: 'z 30 dni' },
+  { key: '90', label: '90 dni', days: 90 as const, genitive: 'z 90 dni' },
+  { key: 'all', label: 'cały czas', days: 'all' as const, genitive: 'z całego okresu' },
 ] as const;
+
+// Odtwarza krótki "rozkwit" (skala + fade-in) za każdym razem, gdy zmienia się
+// changeKey — używane, żeby kwiatek okresu i wykresy wizualnie ożywały się przy
+// przełączaniu 7/30/90/cały czas, zamiast podmieniać się w miejscu bez animacji.
+function BloomOnChange({
+  changeKey,
+  children,
+  style,
+}: {
+  changeKey: string;
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const scale = useSharedValue(0.94);
+  const opacity = useSharedValue(0);
+  useEffect(() => {
+    scale.value = 0.94;
+    opacity.value = 0;
+    scale.value = withTiming(1, { duration: 650, easing: Easing.out(Easing.back(1.6)) });
+    opacity.value = withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [changeKey]);
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
+}
 
 const AXIS_LABELS: Record<(typeof AXES)[number], string> = {
   day: 'Dzień',
@@ -78,7 +107,7 @@ export default function Garden() {
     [entriesList, currentWindow.days, today],
   );
 
-  const avg = useMemo(() => averageDay(windowed), [windowed]);
+  const avg = useMemo(() => modeDay(windowed), [windowed]);
   const tags = useMemo(() => tagsSummary(entriesList), [entriesList]);
   const streak = useMemo(() => streakDays(entriesList, today), [entriesList, today]);
   const words = useMemo(() => topWords(notesList, 30), [notesList]);
@@ -188,10 +217,10 @@ export default function Garden() {
             Kwiatek okresu
           </Text>
           <Text variant="body" tone="muted" style={{ marginBottom: 16 }}>
-            Uśrednione osie z wybranego okna.
+            Obraz sześciu obszarów zbudowany z Twoich najczęstszych odpowiedzi w wybranym czasie.
           </Text>
           <WindowPicker current={windowKey} onSelect={setWindowKey} />
-          <View style={{ alignItems: 'center', marginTop: 16 + AVG_CHROME_PAD }}>
+          <BloomOnChange changeKey={windowKey} style={{ alignItems: 'center', marginTop: 16 + AVG_CHROME_PAD }}>
             <View style={{ width: avgFlowerSize, height: avgFlowerSize }} className="items-center justify-center">
               <FlowerLazy
                 dna={dna}
@@ -213,13 +242,16 @@ export default function Garden() {
                 ? 'brak wpisów w tym okresie'
                 : `${windowed.length} ${windowed.length === 1 ? 'wpis' : 'wpisów'} · ${currentWindow.label}`}
             </Text>
-          </View>
+          </BloomOnChange>
         </View>
 
         {/* Sekcja 3b — Profil okresu (rozkład + wstęga) */}
         <View style={{ marginTop: 40 }}>
-          <Text variant="h3" style={{ marginBottom: 12 }}>
+          <Text variant="h3" style={{ marginBottom: 8 }}>
             Profil okresu
+          </Text>
+          <Text variant="body" tone="muted" style={{ marginBottom: 16 }}>
+            Zobacz, które odpowiedzi pojawiały się najczęściej w każdym z sześciu obszarów.
           </Text>
           <View style={{ marginBottom: 20, gap: 10 }}>
             <View className="flex-row items-center" style={{ gap: 10 }}>
@@ -235,7 +267,7 @@ export default function Garden() {
                   grain={false}
                 />
               </View>
-              <Text variant="caption" tone="muted">Najczęściej wybierane</Text>
+              <Text variant="caption" tone="muted">Najczęściej wybierana odpowiedź</Text>
             </View>
             <View className="flex-row items-center" style={{ gap: 10 }}>
               <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
@@ -250,7 +282,7 @@ export default function Garden() {
                   }}
                 />
               </View>
-              <Text variant="caption" tone="muted">Wielkość kropki w zależności od wyboru</Text>
+              <Text variant="caption" tone="muted">Wielkość symbolu pokazuje, jak często wybierano daną odpowiedź</Text>
             </View>
           </View>
           {windowed.length === 0 ? (
@@ -258,23 +290,27 @@ export default function Garden() {
               brak wpisów w tym okresie
             </Text>
           ) : (
-            <AxisRibbon
-              rows={ribbonRows}
-              width={contentW}
-              rowHeight={76}
-              dna={dna}
-              dnaSeed={dnaSeed}
-              bloomKey={windowKey}
-            />
+            <BloomOnChange changeKey={windowKey}>
+              <AxisRibbon
+                rows={ribbonRows}
+                width={contentW}
+                rowHeight={76}
+                dna={dna}
+                dnaSeed={dnaSeed}
+                bloomKey={windowKey}
+              />
+            </BloomOnChange>
           )}
         </View>
 
         {/* Sekcja 4 — Trend liniowy 6 osi */}
         <View style={{ marginTop: 40 }}>
           <Text variant="h3" style={{ marginBottom: 12 }}>
-            Trend osi ({currentWindow.label})
+            Trend obszarów ({currentWindow.label})
           </Text>
-          <AxisTrendCards cells={sparklineCells} width={contentW} periodLabel={currentWindow.label} />
+          <BloomOnChange changeKey={windowKey}>
+            <AxisTrendCards cells={sparklineCells} width={contentW} periodLabel={currentWindow.genitive} />
+          </BloomOnChange>
         </View>
 
         {/* Sekcja 6 — Tagi */}

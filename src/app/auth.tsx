@@ -1,14 +1,18 @@
 // Logowanie i rejestracja przez email + hasło.
-import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Text } from '../components/ui/text';
 import { FlowerLazy } from '../components/FlowerLazy';
-import { AmbientBlooms, type Bloom } from '../components/AmbientBlooms';
 import { deriveDna } from '../lib/flower/dna';
-import { PALETTES } from '../lib/flower/palettes';
 import type { DayData } from '../lib/flower/types';
 
 // Dekoracyjny kwiatek na ekranie powitalnym — deterministyczny, nie należy do żadnego usera.
@@ -39,25 +43,23 @@ export default function Auth() {
 
   const isSignUp = mode === 'signUp';
   const canSubmit = email.trim().length > 3 && password.length >= 6 && !pending;
+  const insets = useSafeAreaInsets();
 
   const welcomeDna = useMemo(() => deriveDna(WELCOME_SEED), []);
   const welcomeDnaSeed = useMemo(() => seedHash(WELCOME_SEED), []);
-  const welcomePalette = PALETTES[welcomeDna.paletteIndex % PALETTES.length];
 
-  const { width: winW, height: winH } = useWindowDimensions();
-  // Rozlane, akwarelowe plamy koloru w tle całego ekranu — kolory z tej samej
-  // palety co kwiatek, żeby scena była spójna, a nie jakby kwiatek stał na
-  // osobnym, niepowiązanym tle. Nisko nasycone i duże, żeby nie konkurowały
-  // z kwiatkiem o uwagę (on ma zostać najbardziej wyrazistym elementem).
-  const blooms = useMemo<Bloom[]>(
-    () => [
-      { cx: winW * 0.08, cy: winH * 0.06, r: Math.max(winW, winH) * 0.28, color: welcomePalette.petals[0] },
-      { cx: winW * 0.95, cy: winH * 0.18, r: Math.max(winW, winH) * 0.24, color: welcomePalette.aura, opacity: 0.22 },
-      { cx: winW * 0.02, cy: winH * 0.62, r: Math.max(winW, winH) * 0.22, color: welcomePalette.petals[3], opacity: 0.2 },
-      { cx: winW * 0.98, cy: winH * 0.85, r: Math.max(winW, winH) * 0.3, color: welcomePalette.petals[4], opacity: 0.18 },
-    ],
-    [winW, winH, welcomePalette],
-  );
+  // Animacja rozkwitania kwiatka powitalnego — pąk otwiera się w pełny kwiat
+  // przy wejściu na ekran (jednorazowo, z lekkim "przekwitem" na końcu ruchu).
+  const bloom = useSharedValue(0.35);
+  const bloomOpacity = useSharedValue(0);
+  useEffect(() => {
+    bloom.value = withTiming(1, { duration: 1300, easing: Easing.out(Easing.back(1.4)) });
+    bloomOpacity.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
+  }, [bloom, bloomOpacity]);
+  const flowerAnimStyle = useAnimatedStyle(() => ({
+    opacity: bloomOpacity.value,
+    transform: [{ scale: bloom.value }],
+  }));
 
   async function submit() {
     setErr(null);
@@ -88,8 +90,7 @@ export default function Auth() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <AmbientBlooms width={winW} height={winH} blooms={blooms} />
+    <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
@@ -100,7 +101,9 @@ export default function Auth() {
           showsVerticalScrollIndicator={false}
         >
           <View className="items-center pt-10" style={{ width: 210, height: 210, alignSelf: 'center' }}>
-            <FlowerLazy dna={welcomeDna} day={WELCOME_DAY} size={210} dnaSeed={welcomeDnaSeed} grain />
+            <Animated.View style={flowerAnimStyle}>
+              <FlowerLazy dna={welcomeDna} day={WELCOME_DAY} size={210} dnaSeed={welcomeDnaSeed} grain />
+            </Animated.View>
           </View>
 
           <View className="items-center mt-4 px-8">
@@ -113,20 +116,14 @@ export default function Auth() {
               Daily Bloom
             </Text>
             <Text variant="caption" tone="muted" className="mt-3 text-center">
-              Jedna chwila dziennie. Jeden kwiat, który rośnie razem z Tobą.
+              Twój dzienniczek dnia: codzienny kwiat, który rośnie razem z Tobą, i rozmowa z AI terapeutą, kiedy masz ochotę się wygadać.
             </Text>
           </View>
 
-          <View className="px-7 mt-9">
-            <View className="flex-row items-center" style={{ gap: 12 }}>
-              <View className="flex-1 h-px bg-ink-muted/20" />
-              <Text variant="caption" tone="muted">
-                {isSignUp ? 'załóż konto' : 'zaloguj się'}
-              </Text>
-              <View className="flex-1 h-px bg-ink-muted/20" />
-            </View>
+          <View style={{ flex: 1, minHeight: 24 }} />
 
-            <Text variant="h3" className="mt-6">
+          <View className="px-7" style={{ paddingBottom: Math.max(32, insets.bottom + 16) }}>
+            <Text variant="h3">
               {isSignUp ? 'Załóż konto, żeby Twoje dni nie zginęły.' : 'Miło Cię znów widzieć.'}
             </Text>
             <Text variant="caption" tone="muted" className="mt-2">
