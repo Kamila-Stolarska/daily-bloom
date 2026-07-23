@@ -243,7 +243,6 @@ export default function Home() {
                 <FlowerChrome
                   size={flowerSize}
                   rotationOffset={dna.rotationOffset}
-                  showGrid
                   pad={CHROME_PAD}
                   revealKey={selectedDate}
                   onAxisPress={(axis) => setEditingAxis(axis)}

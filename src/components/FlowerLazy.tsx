@@ -1,11 +1,14 @@
-// Wrapper na OrganicFlower z lazy-load Skia na web.
+// Wrapper na SoftBloomFlower z lazy-load Skia na web.
 // Skia.web.js przy imporcie robi JsiSkApi(global.CanvasKit). Jeśli CanvasKit jeszcze nie
-// załadowany — Skia jest broken na stałe. Dlatego import OrganicFlower DOPIERO po LoadSkiaWeb.
+// załadowany — Skia jest broken na stałe. Dlatego import DOPIERO po LoadSkiaWeb.
+// Uwaga: FlowerLazy tunel do wszystkich ekranów renderujących kwiatek użytkownika
+// (home/ogród/powitanie/wpis/chat). Podmiana tutaj = zmiana designu w całej appce.
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Dna } from '../lib/flower/dna';
 import { DayData } from '../lib/flower/types';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 
 type Props = {
   dna: Dna;
@@ -24,12 +27,9 @@ export function FlowerLazy(props: Props) {
   const Flower = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
-        const mod = await import('./OrganicFlower');
-        return { default: mod.OrganicFlower };
+        await ensureSkiaWeb();
+        const mod = await import('./FlowerVariants');
+        return { default: mod.SoftBloomFlower };
       }),
     [],
   );

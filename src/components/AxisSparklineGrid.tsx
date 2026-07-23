@@ -1,7 +1,8 @@
 // Lazy wrapper czekający na LoadSkiaWeb (wzorzec z FlowerLazy).
 import { lazy, Suspense, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from './ui/text';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 
 type Point = { date: string; value: number };
 type Cell = { label: string; series: Point[] };
@@ -17,10 +18,7 @@ export function AxisSparklineGrid(props: Props) {
   const Impl = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
+        await ensureSkiaWeb();
         const mod = await import('./AxisSparklineGridImpl');
         return { default: mod.AxisSparklineGridImpl };
       }),

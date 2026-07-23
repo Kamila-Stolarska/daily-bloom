@@ -4,11 +4,12 @@
 // Dlatego LabContent ładujemy DYNAMICZNIE — dopiero po LoadSkiaWeb.
 
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { Platform, Pressable, Text as RNText, View } from 'react-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/ui/text';
 import { useStore } from '../lib/store';
 import { seedTestWeek, clearTestWeek, clearChatHistory } from '../lib/dev/seed';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 
 function DevTools() {
   const hydrate = useStore((s) => s.hydrate);
@@ -95,10 +96,7 @@ export default function Lab() {
   const LabContent = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
+        await ensureSkiaWeb();
         return import('../components/LabContent');
       }),
     [],

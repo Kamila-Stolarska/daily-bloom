@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { ScrollView, View } from 'react-native';
 import { OrganicFlower } from './OrganicFlower';
-import { SoftBloomFlower, WatercolorBleedFlower } from './FlowerVariants';
+import { SoftBloomFlower } from './FlowerVariants';
 import { DayData } from '../lib/flower/types';
 import { Text } from './ui/text';
 
@@ -83,12 +83,6 @@ export default function LabContent() {
         label="A — SOFT BLOOM"
         caption="1:1 z flower.svg — białe płatki + gradient lime→orange, różowy blur w środku"
         Render={(p) => <SoftBloomFlower {...p} />}
-      />
-
-      <Variant
-        label="B — WATERCOLOR BLEED"
-        caption="krzyżujące się przezroczyste płatki + mocny grain, warm palette"
-        Render={(p) => <WatercolorBleedFlower {...p} />}
       />
     </ScrollView>
   );

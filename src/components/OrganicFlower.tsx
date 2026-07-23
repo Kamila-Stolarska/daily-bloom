@@ -32,6 +32,9 @@ type Props = {
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
+  /** Kolor/grubość widma osi (kontur na pełnej skali 5, pod kolorem płatka). */
+  axisGuideColor?: string;
+  axisGuideWidth?: number;
   /** Wyłącz animację rozkwitania (np. w stats, kiedy zmieniamy dużo na raz). */
   animate?: boolean;
   /** Dodatkowy klucz wymuszający ponowne rozkwitnięcie (np. przy przełączaniu okna
@@ -106,6 +109,7 @@ function petalTransform(petal: PetalRender, index: number, cx: number, cy: numbe
 export const OrganicFlower = React.memo(function OrganicFlower({
   dna, day, size, dnaSeed, grain = false,
   outline = false, outlineColor = '#E1D8CE', outlineWidth = 1,
+  axisGuideColor = '#7A6F62', axisGuideWidth = 0.75,
   animate = true, bloomKey,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
@@ -150,6 +154,23 @@ export const OrganicFlower = React.memo(function OrganicFlower({
     [dnaSeed, palette, satFactor, day.day, day.emotions, day.energy, day.body, day.delight, day.meaning, dna.rotationOffset, petalBaseWidth],
   );
 
+  // Płatki-widma na pełnej skali (5) — ta sama kotwica kątowa/szerokość/kształt co
+  // płatek koloru, tylko dłuższe. Rysowane POD warstwą koloru: tam gdzie płatek nie
+  // sięga 5, wystaje cienki kontur; tam gdzie sięga, kolor go w całości zakrywa.
+  const guides: PetalRender[] = useMemo(
+    () => AXES.map((_axis, i) => {
+      const jitter = petalJitter(dnaSeed, i);
+      const length = lenFor(5);
+      const width = petalBaseWidth * jitter.widthScale;
+      const angleDeg = i * 60 + dna.rotationOffset + jitter.angleOffset;
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const path = organicPetalPath(length, width, jitter.pathSeed);
+      return { path, length, width, angleRad, tipHex: '', baseHex: '' };
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dnaSeed, dna.rotationOffset, petalBaseWidth, legendR],
+  );
+
   const progress = useBloomProgress(animate, [
     dnaSeed, day.day, day.energy, day.body, day.delight, day.meaning, day.emotions,
     day.dateIso, outline, bloomKey,
@@ -174,6 +195,13 @@ export const OrganicFlower = React.memo(function OrganicFlower({
 
   return (
     <Canvas style={{ width: size, height: size }}>
+      {/* Widma osi (skala 5) — pod kolorem, żeby prześwitywały tylko tam, gdzie płatek jest krótszy. */}
+      {guides.map((g, i) => (
+        <Group key={`guide-${i}`} transform={petalTransform(g, i, cx, cy, progress)}>
+          <Path path={g.path} style="stroke" strokeWidth={axisGuideWidth} color={axisGuideColor} opacity={0.5} />
+        </Group>
+      ))}
+
       {/* Warstwa kolorów — gradient + lekki blur dla "krwawiących" krawędzi. */}
       {petals.map((p, i) => (
         <Group key={`color-${i}`} transform={petalTransform(p, i, cx, cy, progress)}>

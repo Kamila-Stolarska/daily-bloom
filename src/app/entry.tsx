@@ -372,7 +372,6 @@ export default function EntryScreen() {
             <FlowerChrome
               size={340}
               rotationOffset={dna.rotationOffset}
-              showGrid
               pad={40}
               revealKey={savedEntry.date}
             />

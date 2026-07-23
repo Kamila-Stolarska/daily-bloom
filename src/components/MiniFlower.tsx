@@ -1,20 +1,33 @@
 // Miniaturowy, "poglądowy" kwiatek — do siatek z wieloma komórkami naraz
 // (kalendarz-heatmapa). Celowo NIE używa Skia: kalendarz może mieć do 31
 // komórek, a każdy Skia <Canvas> zajmuje osobny kontekst WebGL — przy takiej
-// liczbie łatwo wyczerpać limit przeglądarki (patrz historia CalendarHeatmap.tsx).
-// Zamiast tego rysujemy te same organiczne płatki (organicPetalPath, jak w
-// OrganicFlower) jako lekkie SVG — brak WebGL, brak limitu.
+// liczbie łatwo wyczerpać limit przeglądarki. Zamiast tego rysujemy ten sam
+// kanoniczny kształt płatka co SoftBloomFlower jako lekkie SVG — brak WebGL,
+// brak limitu.
 //
-// To NIE jest dokładny portret dnia: wszystkie płatki mają pełną długość
-// (kwiatek zawsze "w pełni rozkwitnięty"), a kolory to paleta DNA użytkowniczki.
-// Chodzi wyłącznie o czytelny znacznik "tu jest wpis", spójny wizualnie
+// KRYTYCZNE: importuj kształt/geometrię TYLKO z './flowerShape' (plik bez
+// importu Skia), NIGDY z './FlowerVariants' — ten drugi statycznie importuje
+// @shopify/react-native-skia, a CalendarHeatmap (i ten komponent) montują się
+// eagerly na ekranie, zanim ensureSkiaWeb() zdąży załadować CanvasKit. Import
+// Skia przed jego gotowością trwale psuje Skia na całej stronie.
+//
+// To NIE jest dokładny portret dnia: wszystkie płatki są w pełnym rozkwicie
+// (poziom 5), tym samym stałym gradientem lime→orange co w SoftBloomFlower —
+// chodzi wyłącznie o czytelny znacznik "tu jest wpis", spójny wizualnie
 // z prawdziwym kwiatkiem gdzie indziej w aplikacji.
 
-import Svg, { G, Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, G, Path } from 'react-native-svg';
 import type { Dna } from '../lib/flower/dna';
-import { PALETTES } from '../lib/flower/palettes';
-import { organicPetalPath, petalJitter } from '../lib/flower/organic';
-import { AXES } from '../lib/flower/types';
+import {
+  SVG_SIZE,
+  SVG_CX,
+  SVG_CY,
+  GRADIENT_COLORS,
+  CANON_WHITE_PATH,
+  CANON_COLOR_PATH,
+  CANON_GRADIENT_VEC,
+  PETAL_COUNT,
+} from './flowerShape';
 
 type Props = {
   dna: Dna;
@@ -22,28 +35,38 @@ type Props = {
   size: number;
 };
 
-export function MiniFlower({ dna, dnaSeed, size }: Props) {
-  const palette = PALETTES[dna.paletteIndex % PALETTES.length];
-  const cx = size / 2;
-  const cy = size / 2;
-  const baseR = size * 0.42;
-  const legendR = size * 0.48; // pełny rozkwit — jak lenFor(5) w OrganicFlower
-  const petalBaseWidth = baseR * 0.28;
+const FULL_BLOOM_DEG = Array.from({ length: PETAL_COUNT }, (_, i) => (i * 360) / PETAL_COUNT);
+
+export function MiniFlower({ size }: Props) {
+  const scale = (size / SVG_SIZE) * 0.98;
+  const offset = size / 2 - scale * SVG_CX;
 
   return (
     <Svg width={size} height={size} pointerEvents="none">
-      <G>
-        {AXES.map((_axis, i) => {
-          const jitter = petalJitter(dnaSeed, i);
-          const width = petalBaseWidth * jitter.widthScale;
-          const angleDeg = i * 60 + dna.rotationOffset + jitter.angleOffset;
-          const path = organicPetalPath(legendR, width, jitter.pathSeed);
-          return (
-            <G key={i} transform={`translate(${cx}, ${cy}) rotate(${angleDeg})`}>
-              <Path d={path} fill={palette.petals[i]} />
-            </G>
-          );
-        })}
+      <Defs>
+        <LinearGradient
+          id="miniFlowerGradient"
+          x1={CANON_GRADIENT_VEC.x1}
+          y1={CANON_GRADIENT_VEC.y1}
+          x2={CANON_GRADIENT_VEC.x2}
+          y2={CANON_GRADIENT_VEC.y2}
+          gradientUnits="userSpaceOnUse"
+        >
+          <Stop offset="0" stopColor={GRADIENT_COLORS[0]} />
+          <Stop offset="1" stopColor={GRADIENT_COLORS[1]} />
+        </LinearGradient>
+      </Defs>
+      <G transform={`translate(${offset}, ${offset}) scale(${scale})`}>
+        {FULL_BLOOM_DEG.map((deg, i) => (
+          <G key={`white-${i}`} transform={`rotate(${deg}, ${SVG_CX}, ${SVG_CY})`}>
+            <Path d={CANON_WHITE_PATH} fill="#FFFFFF" />
+          </G>
+        ))}
+        {FULL_BLOOM_DEG.map((deg, i) => (
+          <G key={`fill-${i}`} transform={`rotate(${deg}, ${SVG_CX}, ${SVG_CY})`}>
+            <Path d={CANON_COLOR_PATH} fill="url(#miniFlowerGradient)" />
+          </G>
+        ))}
       </G>
     </Svg>
   );

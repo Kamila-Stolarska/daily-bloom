@@ -5,8 +5,9 @@
 // jako nakładka FlowerLazy (żeby użyć naszego renderu DNA).
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from './ui/text';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 import type { Scale, DayData } from '../lib/flower/types';
 import type { Dna } from '../lib/flower/dna';
 
@@ -31,10 +32,7 @@ export function AxisRibbon(props: Props) {
   const Impl = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
+        await ensureSkiaWeb();
         const mod = await import('./AxisRibbonImpl');
         return { default: mod.AxisRibbonImpl };
       }),

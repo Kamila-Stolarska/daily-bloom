@@ -25,7 +25,6 @@ import { FlowerChrome } from '../components/FlowerChrome';
 import { AxisTrendCards } from '../components/AxisTrendCards';
 import { AxisRibbon } from '../components/AxisRibbon';
 import { CalendarHeatmap } from '../components/CalendarHeatmap';
-import { FlowerGarden } from '../components/FlowerGarden';
 import { TagsSummary } from '../components/TagsSummary';
 import { WordCloud } from '../components/WordCloud';
 
@@ -165,18 +164,21 @@ export default function Garden() {
             : `${entriesList.length} ${entriesList.length === 1 ? 'wpis' : 'wpisów'} · streak ${streak} ${streak === 1 ? 'dzień' : 'dni'}`}
         </Text>
 
-        {/* Sekcja 2 — Ogród (chronologiczny grid) — GŁÓWNA */}
-        <View style={{ marginTop: 32 }}>
-          <Text variant="h3" style={{ marginBottom: 12 }}>
-            Twoje kwiatki
-          </Text>
-          <FlowerGarden
-            entries={entriesList}
+        {/* Sekcja 2 — Kalendarz-heatmapa */}
+        <View style={{ marginTop: 32, alignItems: 'center' }}>
+          <View style={{ alignSelf: 'stretch', marginBottom: 8 }}>
+            <Text variant="h3">Kalendarz</Text>
+          </View>
+          <CalendarHeatmap
+            entries={entries}
             notesByDate={notesByDate}
+            month={month}
             dna={dna}
             dnaSeed={dnaSeed}
-            onSelectDate={openEntry}
             width={contentW}
+            onPrev={() => stepMonth(-1)}
+            onNext={() => stepMonth(1)}
+            onSelectDate={openEntry}
           />
         </View>
 
@@ -202,7 +204,6 @@ export default function Garden() {
               <FlowerChrome
                 size={avgFlowerSize}
                 rotationOffset={dna.rotationOffset}
-                showGrid
                 pad={AVG_CHROME_PAD}
                 revealKey={windowKey}
               />
@@ -274,23 +275,6 @@ export default function Garden() {
             Trend osi ({currentWindow.label})
           </Text>
           <AxisTrendCards cells={sparklineCells} width={contentW} periodLabel={currentWindow.label} />
-        </View>
-
-        {/* Sekcja 5 — Kalendarz-heatmapa */}
-        <View style={{ marginTop: 40, alignItems: 'center' }}>
-          <View style={{ alignSelf: 'stretch', marginBottom: 8 }}>
-            <Text variant="h3">Kalendarz</Text>
-          </View>
-          <CalendarHeatmap
-            entries={entries}
-            notesByDate={notesByDate}
-            month={month}
-            dna={dna}
-            dnaSeed={dnaSeed}
-            onPrev={() => stepMonth(-1)}
-            onNext={() => stepMonth(1)}
-            onSelectDate={openEntry}
-          />
         </View>
 
         {/* Sekcja 6 — Tagi */}

@@ -1,6 +1,6 @@
 // Miesięczny grid dni: każdy dzień z wpisem dostaje mały "poglądowy" kwiatek
-// (MiniFlower — SVG, nie Skia) w rogu komórki, w kolorach palety DNA
-// użytkowniczki. Bez heat-koloru tła — same komórki są jednolicie jasne,
+// (MiniFlower — SVG, nie Skia) w rogu komórki, tym samym kanonicznym kształtem
+// i gradientem co SoftBloomFlower. Bez heat-koloru tła — same komórki są jednolicie jasne,
 // kwiatek jest jedynym sygnałem "tu jest wpis" (jak w sekcji Ogród, tylko
 // mniejsze). MiniFlower celowo nie koduje realnych wartości osi (zawsze pełny
 // rozkwit) — przy 31 komórkach naraz Skia <Canvas> per komórka wyczerpałby
@@ -20,6 +20,7 @@ type Props = {
   month: Date;
   dna: Dna;
   dnaSeed: number;
+  width: number; // szerokość dostępnego kontentu — komórki skalują się do 1/7 tego
   onPrev: () => void;
   onNext: () => void;
   onSelectDate: (dateIso: string) => void;
@@ -30,9 +31,9 @@ const MONTHS_PL = [
   'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień',
 ];
 const WEEKDAY_SHORT = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
-const CELL = 44;
-const TILE = 34;
-const BADGE = 18;
+// Proporcje wzorowane na oryginalnych stałych (44/34/18) — przeliczane z CELL.
+const TILE_RATIO = 34 / 44;
+const BADGE_RATIO = 18 / 44;
 
 function isoDate(d: Date): string {
   const y = d.getFullYear();
@@ -47,11 +48,16 @@ export function CalendarHeatmap({
   month,
   dna,
   dnaSeed,
+  width,
   onPrev,
   onNext,
   onSelectDate,
 }: Props) {
   const today = todayIso();
+  const CELL = Math.floor(width / 7);
+  const TILE = Math.round(CELL * TILE_RATIO);
+  const BADGE = Math.round(CELL * BADGE_RATIO);
+  const dayFontSize = Math.max(11, Math.round(CELL * 0.27));
 
   const grid = useMemo(() => {
     const first = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -130,7 +136,7 @@ export function CalendarHeatmap({
                     justifyContent: 'center',
                   }}
                 >
-                  <Text variant="mono" style={{ fontSize: 11, color: '#3B342C' }}>
+                  <Text variant="mono" style={{ fontSize: dayFontSize, color: '#3B342C' }}>
                     {cell.day}
                   </Text>
                   {hasNote && !entry && (

@@ -1,8 +1,10 @@
 // Rzeczywisty render "portretu okresu".
 // - Skia Canvas rysuje: 6 poziomych osi, kropki 1..5 (rozmiar ∝ liczba wyborów),
-//   koralowa wstęga (Bézier + blur) łącząca mode'y.
-// - Kwiatki (nasz OrganicFlower/DNA) rysowane jako nakładka absolutna nad Canvas —
-//   po jednym `FlowerLazy` na oś, umieszczony na wartości modalnej.
+//   koralowa wstęga (Bézier + blur) łącząca mode'y, ORAZ kwiatki (SoftBloomFlowerContent)
+//   — wszystko w JEDNYM współdzielonym Canvas. Wcześniej kwiatki były osobnymi
+//   `FlowerLazy` (każdy = własny Canvas/WebGL context) — przy 6 osiach naraz to
+//   6 dodatkowych kontekstów WebGL obok innych kwiatków na ekranie /garden,
+//   co potrafiło wyczerpać limit przeglądarki i zostawić ten wiersz bez kwiatków.
 //
 // Etykiety osi po lewej wyrównane do środka (RN <Text>).
 // Prawa krawędź osi zostawia miejsce na kwiatek (żeby nie ucinał się przy value=5).
@@ -11,7 +13,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { Canvas, Group, Path, Skia, Circle, BlurMask } from '@shopify/react-native-skia';
 import { Text } from './ui/text';
-import { FlowerLazy } from './FlowerLazy';
+import { SoftBloomFlowerContent } from './SoftBloomFlowerContent';
 import type { RibbonRow } from './AxisRibbon';
 import type { Dna } from '../lib/flower/dna';
 
@@ -25,7 +27,7 @@ type Props = {
 };
 
 const COLOR_AXIS = '#D9CFC1';
-const COLOR_CORAL = '#DD6181';         // akcent wstęgi
+const COLOR_CORAL = '#C8DD61';         // akcent wstęgi
 const LABEL_W = 76;                    // pas na etykietę po lewej
 const AXIS_PAD = 8;                    // odstęp między etykietą a osią
 const AXIS_OVERHANG = 10;              // o ile linia wystaje poza skrajne kropki (jak w inspiracji)
@@ -40,7 +42,7 @@ function dotRadius(count: number, maxCount: number): number {
   return 2.5 + Math.sqrt(t) * 5; // 2.5..7.5
 }
 
-export function AxisRibbonImpl({ rows, width, rowHeight = 76, dna, dnaSeed, bloomKey }: Props) {
+export function AxisRibbonImpl({ rows, width, rowHeight = 76 }: Props) {
   const height = rows.length * rowHeight;
   // Kwiatek wyraźnie większy niż największa możliwa kropka (promień ≤ 7.5,
   // czyli średnica ≤ 15) — flowerSize ma średnicę ~60-70px, więc dominuje wiersz.
@@ -179,35 +181,21 @@ export function AxisRibbonImpl({ rows, width, rowHeight = 76, dna, dnaSeed, bloo
             </Path>
           </Group>
         )}
-      </Canvas>
-
-      {/* Kwiatki (nasze DNA) — nakładka nad Canvas, po jednym na oś */}
-      {rows.map((r, i) => {
-        const cx = axisX0 + (r.mode - 1) * stepX;
-        const cy = rowYs[i];
-        return (
-          <View
-            key={`flower-${i}`}
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: cx - flowerSize / 2,
-              top: cy - flowerSize / 2,
-              width: flowerSize,
-              height: flowerSize,
-            }}
-          >
-            <FlowerLazy
-              dna={dna}
+        {/* Kwiatki — w tym samym Canvas co osie/kropki/wstęga (patrz komentarz u góry pliku). */}
+        {rows.map((r, i) => {
+          const cx = axisX0 + (r.mode - 1) * stepX;
+          const cy = rowYs[i];
+          return (
+            <SoftBloomFlowerContent
+              key={`flower-${i}`}
               day={r.day}
               size={flowerSize}
-              dnaSeed={dnaSeed}
-              grain={false}
-              bloomKey={bloomKey}
+              ox={cx - flowerSize / 2}
+              oy={cy - flowerSize / 2}
             />
-          </View>
-        );
-      })}
+          );
+        })}
+      </Canvas>
     </View>
   );
 }

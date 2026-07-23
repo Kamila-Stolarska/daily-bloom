@@ -1,8 +1,9 @@
 // Lazy wrapper czekający na LoadSkiaWeb — jeden Canvas per miesiąc (patrz Impl).
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from './ui/text';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 import type { Entry, Note } from '../lib/store';
 import type { Dna } from '../lib/flower/dna';
 
@@ -19,10 +20,7 @@ export function FlowerGarden(props: Props) {
   const Impl = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
+        await ensureSkiaWeb();
         const mod = await import('./FlowerGardenImpl');
         return { default: mod.FlowerGardenImpl };
       }),

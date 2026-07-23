@@ -4,7 +4,7 @@
 import { Pressable, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
 import { Text } from './ui/text';
-import { OrganicFlowerContent } from './OrganicFlowerContent';
+import { SoftBloomFlowerContent } from './SoftBloomFlowerContent';
 import { entryToDayData, notesLength } from '../lib/store';
 import { groupByMonth } from '../lib/stats';
 import type { Entry, Note } from '../lib/store';
@@ -34,7 +34,7 @@ function monthLabel(ym: string): string {
   return `${MONTHS_PL[m - 1]} ${y}`;
 }
 
-export function FlowerGardenImpl({ entries, notesByDate, dna, dnaSeed, onSelectDate, width }: Props) {
+export function FlowerGardenImpl({ entries, notesByDate, onSelectDate, width }: Props) {
   if (entries.length === 0) {
     return (
       <View style={{ paddingVertical: 32, alignItems: 'center' }}>
@@ -68,12 +68,10 @@ export function FlowerGardenImpl({ entries, notesByDate, dna, dnaSeed, onSelectD
                   const ox = col * (TILE + GAP) + (TILE - FLOWER_SIZE) / 2;
                   const oy = row * (TILE + LABEL_H + GAP) + (TILE - FLOWER_SIZE) / 2;
                   return (
-                    <OrganicFlowerContent
+                    <SoftBloomFlowerContent
                       key={e.dateIso}
-                      dna={dna}
                       day={entryToDayData(e, notesLength(notesByDate[e.dateIso]))}
                       size={FLOWER_SIZE}
-                      dnaSeed={dnaSeed}
                       ox={ox}
                       oy={oy}
                     />

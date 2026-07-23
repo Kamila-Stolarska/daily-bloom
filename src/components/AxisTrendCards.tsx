@@ -2,8 +2,9 @@
 // Karty trendu per oś — pełna szerokość, jedna pod drugą (nie grid).
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from './ui/text';
+import { ensureSkiaWeb } from '../lib/loadSkiaWeb';
 import type { Axis } from '../lib/flower/types';
 
 type Point = { date: string; value: number };
@@ -19,10 +20,7 @@ export function AxisTrendCards(props: Props) {
   const Impl = useMemo(
     () =>
       lazy(async () => {
-        if (Platform.OS === 'web') {
-          const { LoadSkiaWeb } = await import('@shopify/react-native-skia/lib/module/web');
-          await LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' });
-        }
+        await ensureSkiaWeb();
         const mod = await import('./AxisTrendCardsImpl');
         return { default: mod.AxisTrendCardsImpl };
       }),
