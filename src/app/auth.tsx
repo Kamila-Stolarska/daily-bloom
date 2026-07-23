@@ -1,10 +1,35 @@
 // Logowanie i rejestracja przez email + hasło.
-import { useState } from 'react';
-import { TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Text } from '../components/ui/text';
+import { FlowerLazy } from '../components/FlowerLazy';
+import { deriveDna } from '../lib/flower/dna';
+import type { DayData } from '../lib/flower/types';
+
+// Dekoracyjny kwiatek na ekranie powitalnym — deterministyczny, nie należy do żadnego usera.
+// Ten sam komponent (FlowerLazy/OrganicFlower, Skia) co kwiatek dnia i kwiatki
+// w Ogrodzie — bez tego wyglądał jak inny, uproszczony rysunek (MiniFlower to
+// tylko lekki SVG-znacznik do siatek, nie "prawdziwy" kwiatek aplikacji).
+// Pełny rozkwit na wszystkich osiach — to kwiatek powitalny, nie portret dnia.
+const WELCOME_SEED = 'witaj-w-daily-bloom';
+const WELCOME_DAY: DayData = {
+  day: 5, emotions: 5, energy: 5, body: 5, delight: 5, meaning: 5,
+  somethingGood: false, somethingHard: false,
+};
+function seedHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h) || 1234567;
+}
 
 type Mode = 'signIn' | 'signUp';
 
@@ -18,6 +43,23 @@ export default function Auth() {
 
   const isSignUp = mode === 'signUp';
   const canSubmit = email.trim().length > 3 && password.length >= 6 && !pending;
+  const insets = useSafeAreaInsets();
+
+  const welcomeDna = useMemo(() => deriveDna(WELCOME_SEED), []);
+  const welcomeDnaSeed = useMemo(() => seedHash(WELCOME_SEED), []);
+
+  // Animacja rozkwitania kwiatka powitalnego — pąk otwiera się w pełny kwiat
+  // przy wejściu na ekran (jednorazowo, z lekkim "przekwitem" na końcu ruchu).
+  const bloom = useSharedValue(0.35);
+  const bloomOpacity = useSharedValue(0);
+  useEffect(() => {
+    bloom.value = withTiming(1, { duration: 1300, easing: Easing.out(Easing.back(1.4)) });
+    bloomOpacity.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
+  }, [bloom, bloomOpacity]);
+  const flowerAnimStyle = useAnimatedStyle(() => ({
+    opacity: bloomOpacity.value,
+    transform: [{ scale: bloom.value }],
+  }));
 
   async function submit() {
     setErr(null);
@@ -48,104 +90,129 @@ export default function Auth() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <View className="px-7 pt-6">
-        <Text variant="eyebrow">DAILY — BLOOM</Text>
-      </View>
-      <View className="flex-1 px-7 justify-center">
-        <Text variant="eyebrow">WITAJ</Text>
-        <Text
-          variant="display"
-          className="mt-4"
-          style={{ fontSize: 44, lineHeight: 48, letterSpacing: -1.5 }}
+    <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1"
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {isSignUp ? 'Załóż konto, żeby Twoje dni nie zginęły.' : 'Zaloguj się.'}
-        </Text>
-        <Text variant="caption" tone="muted" className="mt-4">
-          {isSignUp
-            ? 'Wpisy zapiszą się w chmurze i zobaczysz je z każdego urządzenia.'
-            : 'Wpisz email i hasło, którymi się rejestrowałaś.'}
-        </Text>
+          <View className="items-center pt-10" style={{ width: 210, height: 210, alignSelf: 'center' }}>
+            <Animated.View style={flowerAnimStyle}>
+              <FlowerLazy dna={welcomeDna} day={WELCOME_DAY} size={210} dnaSeed={welcomeDnaSeed} grain />
+            </Animated.View>
+          </View>
 
-        <View className="mt-8" style={{ gap: 12 }}>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="email"
-            placeholderTextColor="#9A8F82"
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 16,
-              paddingVertical: 14,
-              paddingHorizontal: 18,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#D8CFC2',
-              color: '#1A1614',
-              backgroundColor: '#FBF8F1',
-            }}
-          />
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="hasło (min. 6 znaków)"
-            placeholderTextColor="#9A8F82"
-            autoCapitalize="none"
-            secureTextEntry
-            textContentType={isSignUp ? 'newPassword' : 'password'}
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 16,
-              paddingVertical: 14,
-              paddingHorizontal: 18,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#D8CFC2',
-              color: '#1A1614',
-              backgroundColor: '#FBF8F1',
-            }}
-          />
-        </View>
-
-        <View className="mt-6">
-          <Button variant="solid" onPress={submit} disabled={!canSubmit}>
-            <Text tone="paper" variant="bodyMedium">
-              {pending ? 'Chwila…' : isSignUp ? 'Załóż konto' : 'Zaloguj się'}
+          <View className="items-center mt-4 px-8">
+            <Text variant="eyebrow">WITAJ W</Text>
+            <Text
+              variant="display"
+              className="mt-2 text-center"
+              style={{ fontSize: 40, lineHeight: 42, letterSpacing: -1.2 }}
+            >
+              Daily Bloom
             </Text>
-          </Button>
-        </View>
-
-        <View className="mt-4 items-center">
-          <Button
-            variant="link"
-            onPress={() => {
-              setErr(null);
-              setInfo(null);
-              setMode(isSignUp ? 'signIn' : 'signUp');
-            }}
-            disabled={pending}
-          >
-            <Text variant="caption" tone="muted">
-              {isSignUp ? 'Mam już konto — zaloguj się' : 'Nie mam konta — załóż'}
+            <Text variant="caption" tone="muted" className="mt-3 text-center">
+              Twój dzienniczek dnia: codzienny kwiat, który rośnie razem z Tobą, i rozmowa z AI terapeutą, kiedy masz ochotę się wygadać.
             </Text>
-          </Button>
-        </View>
+          </View>
 
-        {err ? (
-          <Text variant="caption" className="mt-4" style={{ color: '#9A4040' }}>
-            {err}
-          </Text>
-        ) : null}
-        {info ? (
-          <Text variant="caption" className="mt-4" style={{ color: '#3D6B4F' }}>
-            {info}
-          </Text>
-        ) : null}
-      </View>
+          <View style={{ flex: 1, minHeight: 24 }} />
+
+          <View className="px-7" style={{ paddingBottom: Math.max(32, insets.bottom + 16) }}>
+            <Text variant="h3">
+              {isSignUp ? 'Załóż konto, żeby Twoje dni nie zginęły.' : 'Miło Cię znów widzieć.'}
+            </Text>
+            <Text variant="caption" tone="muted" className="mt-2">
+              {isSignUp
+                ? 'Wpisy zapiszą się w chmurze i zobaczysz je z każdego urządzenia.'
+                : 'Wpisz email i hasło, którymi się rejestrowałaś.'}
+            </Text>
+
+            <View className="mt-6" style={{ gap: 12 }}>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="email"
+                placeholderTextColor="#9A8F82"
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                style={{
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 16,
+                  paddingVertical: 14,
+                  paddingHorizontal: 18,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: '#D8CFC2',
+                  color: '#1A1614',
+                  backgroundColor: '#FBF8F1',
+                }}
+              />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="hasło (min. 6 znaków)"
+                placeholderTextColor="#9A8F82"
+                autoCapitalize="none"
+                secureTextEntry
+                textContentType={isSignUp ? 'newPassword' : 'password'}
+                style={{
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 16,
+                  paddingVertical: 14,
+                  paddingHorizontal: 18,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: '#D8CFC2',
+                  color: '#1A1614',
+                  backgroundColor: '#FBF8F1',
+                }}
+              />
+            </View>
+
+            <View className="mt-6">
+              <Button variant="solid" onPress={submit} disabled={!canSubmit}>
+                <Text tone="paper" variant="bodyMedium">
+                  {pending ? 'Chwila…' : isSignUp ? 'Załóż konto' : 'Zaloguj się'}
+                </Text>
+              </Button>
+            </View>
+
+            <View className="mt-4 items-center">
+              <Button
+                variant="link"
+                onPress={() => {
+                  setErr(null);
+                  setInfo(null);
+                  setMode(isSignUp ? 'signIn' : 'signUp');
+                }}
+                disabled={pending}
+              >
+                <Text variant="caption" tone="muted">
+                  {isSignUp ? 'Mam już konto — zaloguj się' : 'Nie mam konta — załóż'}
+                </Text>
+              </Button>
+            </View>
+
+            {err ? (
+              <Text variant="caption" className="mt-4" style={{ color: '#9A4040' }}>
+                {err}
+              </Text>
+            ) : null}
+            {info ? (
+              <Text variant="caption" className="mt-4" style={{ color: '#3D6B4F' }}>
+                {info}
+              </Text>
+            ) : null}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

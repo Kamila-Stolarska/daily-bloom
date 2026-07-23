@@ -414,6 +414,20 @@ export default function Home() {
           })}
         </View>
 
+        {/* Link do Analizuj wpisy — pakietu wizualizacji danych. */}
+        <View className="items-center" style={{ marginTop: 20 }}>
+          <Pressable
+            onPress={() => router.push('/garden')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="otwórz analizuj wpisy"
+          >
+            <Text variant="caption" tone="muted" style={{ letterSpacing: 0.5 }}>
+              Analizuj wpisy →
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Notatki wybranego dnia — pojawiają się gdy są jakieś. */}
         {selectedNotes.length > 0 && (
           <View style={{ marginTop: 24 }}>
@@ -503,6 +517,20 @@ export default function Home() {
               })}
             >
               <Text variant="bodyMedium">Sklep z terapeutami</Text>
+            </Pressable>
+            <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                router.push('/garden');
+              }}
+              style={({ pressed }) => ({
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                backgroundColor: pressed ? '#EDEDDD' : 'transparent',
+              })}
+            >
+              <Text variant="bodyMedium">Analizuj wpisy</Text>
             </Pressable>
             <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
             <Pressable

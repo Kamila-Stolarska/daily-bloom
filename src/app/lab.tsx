@@ -8,7 +8,7 @@ import { Platform, Pressable, Text as RNText, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/ui/text';
 import { useStore } from '../lib/store';
-import { seedTestWeek, clearTestWeek, clearChatHistory } from '../lib/dev/seed';
+import { seedTestWeek, clearTestWeek, seedLongHistory, clearLongHistory, clearChatHistory } from '../lib/dev/seed';
 
 function DevTools() {
   const hydrate = useStore((s) => s.hydrate);
@@ -66,6 +66,32 @@ function DevTools() {
         >
           <Text tone="ink" variant="bodyMedium" style={{ fontSize: 13 }}>
             wyczyść 7 dni
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            run(async () => {
+              const { entries, notes } = await seedLongHistory();
+              return `wgrane: ${entries} wpisów + ${notes} notatek (do 119 dni wstecz)`;
+            })
+          }
+          style={[btn, { backgroundColor: '#1A1614' }]}
+        >
+          <Text tone="paper" variant="bodyMedium" style={{ fontSize: 13 }}>
+            wgraj ~120 dni testowych
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            run(async () => {
+              const { entries, notes } = await clearLongHistory();
+              return `usunięte: ${entries} wpisów + ${notes} notatek`;
+            })
+          }
+          style={[btn, { backgroundColor: 'transparent' }]}
+        >
+          <Text tone="ink" variant="bodyMedium" style={{ fontSize: 13 }}>
+            wyczyść ~120 dni
           </Text>
         </Pressable>
         <Pressable
