@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Text } from '../components/ui/text';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ThinkingFlower } from '../components/chat/ThinkingFlower';
@@ -16,9 +16,9 @@ import { TherapistPicker } from '../components/chat/TherapistPicker';
 import { useChat } from '../lib/chat/useChat';
 import { useTherapists } from '../lib/chat/useTherapists';
 import { DictateButton } from '../components/note/DictateButton';
+import { BottomNav } from '../components/nav/BottomNav';
 
 export default function ChatScreen() {
-  const router = useRouter();
   const params = useLocalSearchParams<{ initial?: string; autofocus?: string; mic?: string }>();
   const insets = useSafeAreaInsets();
   const therapists = useTherapists();
@@ -56,14 +56,9 @@ export default function ChatScreen() {
     <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
       {/* Topbar */}
       <View className="flex-row items-center justify-between px-5 py-3">
-        <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          hitSlop={16}
-        >
-          <Text variant="body" tone="ink" style={{ fontSize: 22 }}>
-            ←
-          </Text>
-        </Pressable>
+        <Text variant="eyebrow" tone="ink">
+          DAILY — BLOOM
+        </Text>
         <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text variant="eyebrow" tone="ink">
             {therapists.active?.name?.toUpperCase() ?? 'DAILY — BLOOM'}
@@ -109,7 +104,27 @@ export default function ChatScreen() {
             ▾
           </Text>
         </Pressable>
-        <View style={{ width: 22 }} />
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Sklep z terapeutami"
+          hitSlop={8}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#E1D8CE',
+            backgroundColor: '#FBFAF1',
+          }}
+        >
+          <Text style={{ fontSize: 11, marginRight: 5, color: '#1A1614' }}>{'\u2726\uFE0E'}</Text>
+          <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+            SKLEP
+          </Text>
+        </Pressable>
       </View>
 
       <KeyboardAvoidingView
@@ -195,7 +210,7 @@ export default function ChatScreen() {
         <View
           className="px-4 pb-3 pt-2"
           style={{
-            paddingBottom: Math.max(12, insets.bottom),
+            paddingBottom: 12,
             borderTopColor: '#EDE5D5',
             borderTopWidth: 1,
             backgroundColor: '#F6F6EA',
@@ -265,6 +280,8 @@ export default function ChatScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <BottomNav floating={false} />
 
       <TherapistPicker
         visible={pickerOpen}

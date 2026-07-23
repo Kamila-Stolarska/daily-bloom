@@ -4,6 +4,7 @@
 // Przyciski formatowania działają na żywej instancji edytora (jeśli istnieje).
 // Aktualnie aktywne formatowanie podświetlamy delikatnym tłem.
 
+import { useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { Editor } from '@tiptap/react';
@@ -40,7 +41,7 @@ function ToolbarBtn({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 999,
-        backgroundColor: active ? 'rgba(26,22,20,0.08)' : 'transparent',
+        backgroundColor: active ? '#EDE5D5' : 'transparent',
       }}
     >
       {children}
@@ -86,6 +87,29 @@ export function NoteEditorToolbar({ onTranscribed, editor, trailingSlot }: Props
   const isWeb = Platform.OS === 'web';
   const canFormat = isWeb && !!editor;
 
+  // Uwaga: React Compiler memoizuje JSX na bazie identity `editor` (stabilny
+  // obiekt), więc wywołanie editor.isActive() bezpośrednio w JSX-ie potrafi
+  // zwrócić "zamrożoną" wartość mimo zmiany zaznaczenia. Dlatego trzymamy
+  // aktywne formaty jako zwykły, porównywalny stan — to go realnie odświeża.
+  const [formats, setFormats] = useState({ bold: false, italic: false, bulletList: false });
+  useEffect(() => {
+    if (!editor) return;
+    const sync = () => {
+      setFormats({
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        bulletList: editor.isActive('bulletList'),
+      });
+    };
+    sync();
+    editor.on('transaction', sync);
+    editor.on('selectionUpdate', sync);
+    return () => {
+      editor.off('transaction', sync);
+      editor.off('selectionUpdate', sync);
+    };
+  }, [editor]);
+
   return (
     <View
       style={{
@@ -102,21 +126,21 @@ export function NoteEditorToolbar({ onTranscribed, editor, trailingSlot }: Props
           <>
             <ToolbarBtn
               onPress={() => editor.chain().focus().toggleBold().run()}
-              active={editor.isActive('bold')}
+              active={formats.bold}
               label="pogrubienie"
             >
               <BoldIcon />
             </ToolbarBtn>
             <ToolbarBtn
               onPress={() => editor.chain().focus().toggleItalic().run()}
-              active={editor.isActive('italic')}
+              active={formats.italic}
               label="kursywa"
             >
               <ItalicIcon />
             </ToolbarBtn>
             <ToolbarBtn
               onPress={() => editor.chain().focus().toggleBulletList().run()}
-              active={editor.isActive('bulletList')}
+              active={formats.bulletList}
               label="lista"
             >
               <ListIcon />

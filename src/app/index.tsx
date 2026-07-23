@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { entryToDayData, notesLength, todayIso, useStore } from '../lib/store';
 import type { Axis, DayData, Scale } from '../lib/flower/types';
@@ -19,9 +19,7 @@ import { FlowerLazy } from '../components/FlowerLazy';
 import { FlowerChrome } from '../components/FlowerChrome';
 import { NoteCard } from '../components/NoteCard';
 import { Text } from '../components/ui/text';
-import { ChatBar } from '../components/chat/ChatBar';
-import { TherapistPicker } from '../components/chat/TherapistPicker';
-import { useTherapists } from '../lib/chat/useTherapists';
+import { BottomNav, BOTTOM_NAV_CONTENT_HEIGHT } from '../components/nav/BottomNav';
 
 function greeting(name: string): string {
   const h = new Date().getHours();
@@ -108,11 +106,11 @@ export default function Home() {
     return `${aStr} — ${bStr}`;
   }, [week]);
 
+  const insets = useSafeAreaInsets();
+  const navBarHeight = BOTTOM_NAV_CONTENT_HEIGHT + Math.max(6, insets.bottom);
   const { width: winW, height: winH } = useWindowDimensions();
   const [flowerBox, setFlowerBox] = useState({ w: 0, h: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [shopOpen, setShopOpen] = useState(false);
-  const therapists = useTherapists();
   const signOut = useStore((s) => s.signOut);
 
   // Responsywne skale
@@ -122,8 +120,8 @@ export default function Home() {
   const headlineLh = Math.round(headlineSize * 1.04);
   const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
   const topPad = tight ? 8 : roomy ? 24 : 16;
-  // Dodatkowy zapas pod pływający ChatBar (≈68px wysokości baru + safe area).
-  const bottomPad = (tight ? 8 : 16) + 84;
+  // Dodatkowy zapas pod dolną nawigację.
+  const bottomPad = (tight ? 8 : 16) + navBarHeight;
   const heroGap = tight ? 16 : roomy ? 32 : 24;
 
   // Kwiatek + miejsce na etykiety legendy (~40px po każdej stronie).
@@ -165,27 +163,6 @@ export default function Home() {
         <View className="flex-row items-center justify-between">
           <Text variant="eyebrow">DAILY — BLOOM</Text>
           <View className="flex-row items-center" style={{ gap: 12 }}>
-            <Pressable
-              onPress={() => setShopOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Sklep z terapeutami"
-              hitSlop={8}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#E1D8CE',
-                backgroundColor: '#FBFAF1',
-              }}
-            >
-              <Text style={{ fontSize: 11, marginRight: 5, color: '#1A1614' }}>{'\u2726\uFE0E'}</Text>
-              <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-                SKLEP
-              </Text>
-            </Pressable>
             <Pressable
               onPress={() => setMenuOpen(true)}
               accessibilityLabel="Menu"
@@ -414,20 +391,6 @@ export default function Home() {
           })}
         </View>
 
-        {/* Link do Analizuj wpisy — pakietu wizualizacji danych. */}
-        <View className="items-center" style={{ marginTop: 20 }}>
-          <Pressable
-            onPress={() => router.push('/garden')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="otwórz analizuj wpisy"
-          >
-            <Text variant="caption" tone="muted" style={{ letterSpacing: 0.5 }}>
-              Analizuj wpisy →
-            </Text>
-          </Pressable>
-        </View>
-
         {/* Notatki wybranego dnia — pojawiają się gdy są jakieś. */}
         {selectedNotes.length > 0 && (
           <View style={{ marginTop: 24 }}>
@@ -465,17 +428,7 @@ export default function Home() {
         onClose={() => setEditingAxis(null)}
       />
 
-      <ChatBar />
-
-      <TherapistPicker
-        visible={shopOpen}
-        onClose={() => setShopOpen(false)}
-        catalog={therapists.catalog}
-        activeId={therapists.activeId}
-        onSelect={(id) => void therapists.setActive(id)}
-        onRestore={() => void therapists.restore()}
-        loading={therapists.loading}
-      />
+      <BottomNav />
 
       <Modal
         visible={menuOpen}
@@ -505,34 +458,6 @@ export default function Home() {
               borderColor: '#E2E2D2',
             }}
           >
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                setShopOpen(true);
-              }}
-              style={({ pressed }) => ({
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                backgroundColor: pressed ? '#EDEDDD' : 'transparent',
-              })}
-            >
-              <Text variant="bodyMedium">Sklep z terapeutami</Text>
-            </Pressable>
-            <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                router.push('/garden');
-              }}
-              style={({ pressed }) => ({
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                backgroundColor: pressed ? '#EDEDDD' : 'transparent',
-              })}
-            >
-              <Text variant="bodyMedium">Analizuj wpisy</Text>
-            </Pressable>
-            <View style={{ height: 1, backgroundColor: '#E2E2D2', marginHorizontal: 12 }} />
             <Pressable
               onPress={() => {
                 setMenuOpen(false);

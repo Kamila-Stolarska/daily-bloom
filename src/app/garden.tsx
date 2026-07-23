@@ -4,10 +4,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useStore, todayIso } from '../lib/store';
+import { BottomNav, BOTTOM_NAV_CONTENT_HEIGHT } from '../components/nav/BottomNav';
 import { deriveDna } from '../lib/flower/dna';
 import { AXES, type DayData } from '../lib/flower/types';
 import {
@@ -85,6 +86,8 @@ export default function Garden() {
   }, [hydrated, hydrate]);
 
   const { width: winW } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const navBarHeight = BOTTOM_NAV_CONTENT_HEIGHT + Math.max(6, insets.bottom);
   const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
   const contentW = winW - horizontalPad * 2;
 
@@ -170,17 +173,13 @@ export default function Garden() {
         contentContainerStyle={{
           paddingHorizontal: horizontalPad,
           paddingTop: 12,
-          paddingBottom: 48,
+          paddingBottom: 48 + navBarHeight,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Top bar */}
-        <View className="flex-row items-center justify-between" style={{ marginBottom: 24 }}>
-          <Pressable onPress={() => router.back()} hitSlop={12} accessibilityLabel="wróć">
-            <Text variant="body" style={{ fontSize: 18 }}>← wróć</Text>
-          </Pressable>
-          <Text variant="eyebrow">ANALIZUJ WPISY</Text>
-          <View style={{ width: 60 }} />
+        <View style={{ marginBottom: 24 }}>
+          <Text variant="eyebrow">DAILY — BLOOM</Text>
         </View>
 
         {/* Header */}
@@ -338,6 +337,8 @@ export default function Garden() {
           </Text>
         </View>
       </ScrollView>
+
+      <BottomNav />
     </SafeAreaView>
   );
 }
