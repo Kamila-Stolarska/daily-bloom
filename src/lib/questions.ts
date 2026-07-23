@@ -10,6 +10,16 @@ export type AxisQuestion = {
   labels: [string, string, string, string, string]; // 1..5
 };
 
+// Etykieta osi po polsku — zgodna z legendą kwiatka (FlowerChrome) i statystykami (garden.tsx).
+export const AXIS_LABELS: Record<Axis, string> = {
+  day: 'DZIEŃ',
+  emotions: 'EMOCJE',
+  energy: 'ENERGIA',
+  body: 'CIAŁO',
+  delight: 'ZACHWYT',
+  meaning: 'SENS',
+};
+
 export const AXIS_QUESTIONS: AxisQuestion[] = [
   {
     axis: 'day',

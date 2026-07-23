@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { AXIS_QUESTIONS, NOTE_PROMPTS } from '../lib/questions';
+import { AXIS_LABELS, AXIS_QUESTIONS, NOTE_PROMPTS } from '../lib/questions';
 import { Scale } from '../lib/flower/types';
 import { Entry, entryToDayData, todayIso, useStore } from '../lib/store';
 import { deriveDna } from '../lib/flower/dna';
@@ -331,7 +331,7 @@ export default function EntryScreen() {
 
         <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 40, paddingBottom: 32 }}>
           <AxisContent key={step.index}>
-            <Text variant="eyebrow">{q.axis.toUpperCase()}</Text>
+            <Text variant="eyebrow">{AXIS_LABELS[q.axis]}</Text>
             <Text variant="h1" className="mt-4">
               {q.prompt}
             </Text>
@@ -371,7 +371,6 @@ export default function EntryScreen() {
             <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
             <FlowerChrome
               size={340}
-              rotationOffset={dna.rotationOffset}
               showGrid
               pad={40}
               revealKey={savedEntry.date}

@@ -53,7 +53,7 @@ function Variant({
           dnaSeed={DNA_SEED}
           animate={false}
         />
-        <FlowerChrome size={SIZE} rotationOffset={HERO_DNA.rotationOffset} showGrid={showGrid} />
+        <FlowerChrome size={SIZE} showGrid={showGrid} />
       </View>
       <Text variant="caption" tone="muted" style={{ marginTop: 12, textAlign: 'center' }}>
         {caption}

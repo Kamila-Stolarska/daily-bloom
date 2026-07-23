@@ -159,8 +159,9 @@ export default function Home() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top label */}
-        <View className="flex-row items-center justify-between">
+        {/* Top label — items-start, żeby etykieta zawsze siadała dokładnie na paddingTop,
+            niezależnie od wysokości przycisków obok niej (spójne z innymi ekranami). */}
+        <View className="flex-row items-start justify-between">
           <Text variant="eyebrow">DAILY — BLOOM</Text>
           <View className="flex-row items-center" style={{ gap: 12 }}>
             <Pressable
@@ -219,7 +220,6 @@ export default function Home() {
                 />
                 <FlowerChrome
                   size={flowerSize}
-                  rotationOffset={dna.rotationOffset}
                   showGrid
                   pad={CHROME_PAD}
                   revealKey={selectedDate}
@@ -282,9 +282,9 @@ export default function Home() {
             accessibilityRole="button"
             accessibilityLabel="dodaj notatkę"
             className="bg-ink rounded-full items-center justify-center"
-            style={{ width: 56, height: 56 }}
+            style={{ width: 36, height: 36 }}
           >
-            <Text tone="paper" style={{ fontSize: 28, lineHeight: 28, marginTop: -2 }}>
+            <Text variant="body" tone="paper" style={{ fontSize: 18, lineHeight: 20 }}>
               +
             </Text>
           </Pressable>

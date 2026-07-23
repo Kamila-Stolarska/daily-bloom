@@ -5,10 +5,12 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 import { Text } from '../components/ui/text';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ThinkingFlower } from '../components/chat/ThinkingFlower';
@@ -18,9 +20,34 @@ import { useTherapists } from '../lib/chat/useTherapists';
 import { DictateButton } from '../components/note/DictateButton';
 import { BottomNav } from '../components/nav/BottomNav';
 
+function ShopIcon({ size = 18, color = '#1A1614' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 8h12l-1 12.2a2 2 0 0 1-2 1.8H9a2 2 0 0 1-2-1.8L6 8Z"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M9 8V6a3 3 0 0 1 6 0v2"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ initial?: string; autofocus?: string; mic?: string }>();
   const insets = useSafeAreaInsets();
+  const { width: winW, height: winH } = useWindowDimensions();
+  const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
+  // Ta sama responsywna wartość co na Home — żeby "DAILY — BLOOM" nie skakało między ekranami.
+  const topPad = winH < 720 ? 8 : winH > 880 ? 24 : 16;
   const therapists = useTherapists();
   const { messages, streaming, error, hydrated, send } = useChat(therapists.activeId);
   const [input, setInput] = useState(params.initial ?? '');
@@ -55,19 +82,37 @@ export default function ChatScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
       {/* Topbar */}
-      <View className="flex-row items-center justify-between px-5 py-3">
-        <Text variant="eyebrow" tone="ink">
-          DAILY — BLOOM
-        </Text>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ paddingHorizontal: horizontalPad, paddingTop: topPad, paddingBottom: 8 }}>
+        <View className="flex-row items-start justify-between" style={{ marginBottom: 14 }}>
           <Text variant="eyebrow" tone="ink">
-            {therapists.active?.name?.toUpperCase() ?? 'DAILY — BLOOM'}
+            DAILY — BLOOM
+          </Text>
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Sklep z terapeutami"
+            hitSlop={8}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1A1614',
+            }}
+          >
+            <ShopIcon size={17} color="#F6F6EA" />
+          </Pressable>
+        </View>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text variant="display" style={{ fontSize: 40, lineHeight: 42, letterSpacing: -1.2 }}>
+            {therapists.active?.name ?? 'Terapeuta'}
           </Text>
           {therapists.active ? (
             therapists.active.is_default ? (
               <View
                 style={{
-                  marginLeft: 8,
+                  marginLeft: 10,
                   paddingHorizontal: 7,
                   paddingVertical: 2,
                   borderRadius: 10,
@@ -84,7 +129,7 @@ export default function ChatScreen() {
             ) : (
               <View
                 style={{
-                  marginLeft: 8,
+                  marginLeft: 10,
                   paddingHorizontal: 7,
                   paddingVertical: 2,
                   borderRadius: 10,
@@ -100,29 +145,8 @@ export default function ChatScreen() {
               </View>
             )
           ) : null}
-          <Text variant="eyebrow" tone="muted" style={{ marginLeft: 6 }}>
+          <Text variant="eyebrow" tone="muted" style={{ marginLeft: 8 }}>
             ▾
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setPickerOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Sklep z terapeutami"
-          hitSlop={8}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#E1D8CE',
-            backgroundColor: '#FBFAF1',
-          }}
-        >
-          <Text style={{ fontSize: 11, marginRight: 5, color: '#1A1614' }}>{'\u2726\uFE0E'}</Text>
-          <Text variant="caption" tone="ink" style={{ fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-            SKLEP
           </Text>
         </Pressable>
       </View>
@@ -136,7 +160,7 @@ export default function ChatScreen() {
           ref={scrollRef}
           className="flex-1"
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: horizontalPad,
             paddingTop: 12,
             paddingBottom: 16,
             flexGrow: 1,
@@ -208,8 +232,9 @@ export default function ChatScreen() {
 
         {/* Input bar */}
         <View
-          className="px-4 pb-3 pt-2"
+          className="pb-3 pt-2"
           style={{
+            paddingHorizontal: horizontalPad,
             paddingBottom: 12,
             borderTopColor: '#EDE5D5',
             borderTopWidth: 1,

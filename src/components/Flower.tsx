@@ -85,7 +85,7 @@ export const Flower = React.memo(function Flower({ dna, day, size, showBg = fals
 
       {/* Płatki */}
       {AXES.map((axis, i) => {
-        const angleDeg = i * 60 + dna.rotationOffset;
+        const angleDeg = i * 60;
         const rad = (angleDeg * Math.PI) / 180;
         const path = petalPath(
           dna.archetypeIndex as Archetype,

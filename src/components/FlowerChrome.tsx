@@ -17,7 +17,6 @@ const LABELS: Record<(typeof AXES)[number], string> = {
 
 type Props = {
   size: number;
-  rotationOffset?: number;
   showGrid?: boolean;
   /** Margines wokół kwiatka na etykiety. Domyślnie 56px. */
   pad?: number;
@@ -64,7 +63,6 @@ function useFadeIn(delayMs: number, durationMs: number, key: string | undefined)
 
 export function FlowerChrome({
   size,
-  rotationOffset = 0,
   showGrid = true,
   pad = 56,
   revealKey,
@@ -113,7 +111,7 @@ export function FlowerChrome({
             })}
             {/* Promienie 6 osi */}
             {AXES.map((_a, i) => {
-              const deg = i * 60 + rotationOffset;
+              const deg = i * 60;
               const rad = (deg * Math.PI) / 180;
               const x2 = cx + baseR * Math.sin(rad);
               const y2 = cy - baseR * Math.cos(rad);
@@ -136,7 +134,7 @@ export function FlowerChrome({
       {/* Etykiety jako natywne Pressable — żeby klik per oś działał na web i iOS.
           Pozycja liczona z kąta osi, identycznie jak wcześniej w SvgText. */}
       {AXES.map((axis, i) => {
-        const deg = i * 60 + rotationOffset;
+        const deg = i * 60;
         const rad = (deg * Math.PI) / 180;
         const labelR = baseR + 18;
         const x = cx + labelR * Math.sin(rad);

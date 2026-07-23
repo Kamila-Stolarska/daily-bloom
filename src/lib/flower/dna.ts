@@ -9,7 +9,9 @@ export type Dna = {
   curvature: number;        // 0.2 – 1.0
   asymmetry: number;        // 0 – 0.3
   textureIndex: number;     // 0 – 3
-  rotationOffset: number;   // -30 – +30 stopni
+  // Niewykorzystywane w renderze (płatki/legenda zawsze na i*60°, DZIEŃ na górze) —
+  // pole zostaje, żeby usunięcie rng() nie przesunęło wylosowanego pestilIndex.
+  rotationOffset: number;
   pestilIndex: number;      // 0 – 5
 };
 

@@ -3,7 +3,7 @@
 
 import { Modal, Pressable, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { AXIS_QUESTIONS } from '../lib/questions';
+import { AXIS_LABELS, AXIS_QUESTIONS } from '../lib/questions';
 import { Axis, Scale } from '../lib/flower/types';
 import { Text } from './ui/text';
 
@@ -96,7 +96,7 @@ export function AxisEditSheet({ axis, currentValue, onSelect, onClose }: Props) 
 
           {q && (
             <>
-              <Text variant="eyebrow">{q.axis.toUpperCase()}</Text>
+              <Text variant="eyebrow">{AXIS_LABELS[q.axis]}</Text>
               <Text variant="h2" className="mt-3" style={{ fontSize: 28, lineHeight: 32, letterSpacing: -0.5 }}>
                 {q.prompt}
               </Text>

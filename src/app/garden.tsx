@@ -85,10 +85,12 @@ export default function Garden() {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
-  const { width: winW } = useWindowDimensions();
+  const { width: winW, height: winH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const navBarHeight = BOTTOM_NAV_CONTENT_HEIGHT + Math.max(6, insets.bottom);
   const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
+  // Ta sama responsywna wartość co na Home — żeby "DAILY — BLOOM" nie skakało między ekranami.
+  const topPad = winH < 720 ? 8 : winH > 880 ? 24 : 16;
   const contentW = winW - horizontalPad * 2;
 
   const dna = useMemo(() => deriveDna(userId || 'anon'), [userId]);
@@ -172,7 +174,7 @@ export default function Garden() {
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: horizontalPad,
-          paddingTop: 12,
+          paddingTop: topPad,
           paddingBottom: 48 + navBarHeight,
         }}
         showsVerticalScrollIndicator={false}
@@ -230,7 +232,6 @@ export default function Garden() {
               />
               <FlowerChrome
                 size={avgFlowerSize}
-                rotationOffset={dna.rotationOffset}
                 pad={AVG_CHROME_PAD}
                 revealKey={windowKey}
               />

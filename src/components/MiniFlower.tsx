@@ -35,7 +35,7 @@ export function MiniFlower({ dna, dnaSeed, size }: Props) {
   const petals = Array.from({ length: PETAL_COUNT }, (_, i) => {
     const jitter = petalJitter(dnaSeed, i);
     const width = petalBaseWidth * jitter.widthScale;
-    const angleDeg = i * 60 + dna.rotationOffset + jitter.angleOffset;
+    const angleDeg = i * 60 + jitter.angleOffset;
     const path = organicPetalPath(legendR, width, jitter.pathSeed);
     const tipHex = withSaturation(palette.petals[i], 1);
     const baseHex = withSaturation(palette.petals[(i + 3) % 6], 0.85);

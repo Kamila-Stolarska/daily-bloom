@@ -39,7 +39,7 @@ export const OrganicFlowerContent = React.memo(function OrganicFlowerContent({
       const jitter = petalJitter(dnaSeed, i);
       const length = lens[i];
       const width = petalBaseWidth * jitter.widthScale;
-      const angleDeg = i * 60 + dna.rotationOffset + jitter.angleOffset;
+      const angleDeg = i * 60 + jitter.angleOffset;
       const angleRad = (angleDeg * Math.PI) / 180;
       const path = organicPetalPath(length, width, jitter.pathSeed);
       const tipHex = withSaturation(palette.petals[i], satFactor);
@@ -47,7 +47,7 @@ export const OrganicFlowerContent = React.memo(function OrganicFlowerContent({
       return { path, length, angleRad, tipHex, baseHex };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dnaSeed, palette, satFactor, legendR, petalBaseWidth, dna.rotationOffset,
+  }, [dnaSeed, palette, satFactor, legendR, petalBaseWidth,
       day.day, day.emotions, day.energy, day.body, day.delight, day.meaning]);
 
   return (

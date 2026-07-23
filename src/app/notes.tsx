@@ -2,7 +2,7 @@
 // Grupuje notatki po dacie (dateIso -> Note[] w store), najnowsze na górze.
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { router } from 'expo-router';
@@ -36,6 +36,10 @@ export default function NotesScreen() {
   const notesByDate = useStore((s) => s.notesByDate);
   const insets = useSafeAreaInsets();
   const navBarHeight = BOTTOM_NAV_CONTENT_HEIGHT + Math.max(6, insets.bottom);
+  const { width: winW, height: winH } = useWindowDimensions();
+  const horizontalPad = winW < 380 ? 20 : winW > 480 ? 32 : 28;
+  // Ta sama responsywna wartość co na Home — żeby "DAILY — BLOOM" nie skakało między ekranami.
+  const topPad = winH < 720 ? 8 : winH > 880 ? 24 : 16;
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -70,23 +74,16 @@ export default function NotesScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 28,
-          paddingTop: 12,
+          paddingHorizontal: horizontalPad,
+          paddingTop: topPad,
           paddingBottom: 32 + navBarHeight,
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Top bar */}
-        <View style={{ marginBottom: 24 }}>
+        <View className="flex-row items-start justify-between" style={{ marginBottom: 24 }}>
           <Text variant="eyebrow">DAILY — BLOOM</Text>
-        </View>
-
-        {/* Header */}
-        <View className="flex-row items-center justify-between" style={{ marginBottom: 24 }}>
-          <Text variant="display" style={{ fontSize: 40, lineHeight: 42, letterSpacing: -1.2 }}>
-            Notatki
-          </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
               onPress={() => {
@@ -100,9 +97,9 @@ export default function NotesScreen() {
               accessibilityLabel="szukaj w notatkach"
               hitSlop={10}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 borderWidth: 1.5,
                 borderColor: searchOpen ? '#1A1614' : '#E1D8CE',
                 backgroundColor: searchOpen ? '#1A1614' : 'transparent',
@@ -110,7 +107,7 @@ export default function NotesScreen() {
                 justifyContent: 'center',
               }}
             >
-              <SearchIcon color={searchOpen ? '#F6F6EA' : '#1A1614'} />
+              <SearchIcon size={16} color={searchOpen ? '#F6F6EA' : '#1A1614'} />
             </Pressable>
             <Pressable
               onPress={() => router.push({ pathname: '/note', params: { date: todayIso() } })}
@@ -118,19 +115,26 @@ export default function NotesScreen() {
               accessibilityLabel="dodaj notatkę"
               hitSlop={10}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: '#1A1614',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text variant="body" tone="paper" style={{ fontSize: 22, lineHeight: 24 }}>
+              <Text variant="body" tone="paper" style={{ fontSize: 18, lineHeight: 20 }}>
                 +
               </Text>
             </Pressable>
           </View>
+        </View>
+
+        {/* Header */}
+        <View style={{ marginBottom: 24 }}>
+          <Text variant="display" style={{ fontSize: 40, lineHeight: 42, letterSpacing: -1.2 }}>
+            Notatki
+          </Text>
         </View>
 
         {searchOpen && (
