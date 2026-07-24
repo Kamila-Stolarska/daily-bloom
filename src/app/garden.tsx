@@ -12,11 +12,20 @@ import { deriveDna } from '../lib/flower/dna';
 import { AXES, type DayData } from '../lib/flower/types';
 import {
   axisDistribution,
-  modeDay,
+  averageDay,
   axisSeries,
   filterByWindow,
+  filterPreviousWindow,
   streakDays,
   tagsSummary,
+  compareWindows,
+  momentGroups,
+  buildInsights,
+  coOccurrenceInsight,
+  fewEntriesMessage,
+  buildDailyInsightPoints,
+  isoDate,
+  MIN_ENTRIES_FOR_CONFIDENT_INSIGHTS,
 } from '../lib/stats';
 import { topWords } from '../lib/text/wordCloud';
 
@@ -24,10 +33,15 @@ import { Text } from '../components/ui/text';
 import { FlowerLazy } from '../components/FlowerLazy';
 import { FlowerChrome } from '../components/FlowerChrome';
 import { AxisTrendCards } from '../components/AxisTrendCards';
+import { AxisTrendChart } from '../components/AxisTrendChart';
 import { AxisRibbon } from '../components/AxisRibbon';
 import { CalendarHeatmap } from '../components/CalendarHeatmap';
 import { TagsSummary } from '../components/TagsSummary';
 import { WordCloud } from '../components/WordCloud';
+import { PeriodComparison } from '../components/PeriodComparison';
+import { MomentGroups } from '../components/MomentGroups';
+import { InsightCard } from '../components/InsightCard';
+import { InsightsListView } from '../components/InsightsListView';
 
 const WINDOWS = [
   { key: '7', label: '7 dni', days: 7 as const, genitive: 'z 7 dni' },
@@ -79,6 +93,7 @@ export default function Garden() {
   const userId = useStore((s) => s.userId);
   const entries = useStore((s) => s.entries);
   const notesByDate = useStore((s) => s.notesByDate);
+  const photosByNoteId = useStore((s) => s.photosByNoteId);
 
   useEffect(() => {
     if (!hydrated) hydrate();
@@ -106,8 +121,15 @@ export default function Garden() {
     () => filterByWindow(entriesList, (e) => e.dateIso, currentWindow.days, today),
     [entriesList, currentWindow.days, today],
   );
+  const previousWindowed = useMemo(
+    () =>
+      currentWindow.days === 'all'
+        ? []
+        : filterPreviousWindow(entriesList, (e) => e.dateIso, currentWindow.days, today),
+    [entriesList, currentWindow.days, today],
+  );
 
-  const avg = useMemo(() => modeDay(windowed), [windowed]);
+  const avg = useMemo(() => averageDay(windowed), [windowed]);
   const tags = useMemo(() => tagsSummary(entriesList), [entriesList]);
   const streak = useMemo(() => streakDays(entriesList, today), [entriesList, today]);
   const words = useMemo(() => topWords(notesList, 30), [notesList]);
@@ -115,6 +137,34 @@ export default function Garden() {
     () => AXES.map((a) => ({ label: AXIS_LABELS[a], axis: a, series: axisSeries(windowed, a) })),
     [windowed],
   );
+  const comparisons = useMemo(
+    () => (currentWindow.days === 'all' ? [] : compareWindows(windowed, previousWindowed)),
+    [windowed, previousWindowed, currentWindow.days],
+  );
+  const previousAvg = useMemo(() => averageDay(previousWindowed), [previousWindowed]);
+  const groups = useMemo(() => momentGroups(windowed), [windowed]);
+  const insights = useMemo(
+    () => buildInsights({ windowed, previousWindowed, comparison: comparisons, groups }),
+    [windowed, previousWindowed, comparisons, groups],
+  );
+  const coOccurrence = useMemo(() => coOccurrenceInsight(groups), [groups]);
+  const confidentInsights = windowed.length >= MIN_ENTRIES_FOR_CONFIDENT_INSIGHTS;
+  const rangeStartIso = useMemo(() => {
+    if (currentWindow.days === 'all') {
+      const sorted = entriesList.map((e) => e.dateIso).sort();
+      return sorted[0] ?? isoDate(today);
+    }
+    const d = new Date(today);
+    d.setDate(d.getDate() - (currentWindow.days - 1));
+    return isoDate(d);
+  }, [currentWindow.days, entriesList, today]);
+  const rangeEndIso = useMemo(() => isoDate(today), [today]);
+  const dailyPoints = useMemo(
+    () => buildDailyInsightPoints(entriesList, rangeStartIso, rangeEndIso, notesByDate, photosByNoteId),
+    [entriesList, rangeStartIso, rangeEndIso, notesByDate, photosByNoteId],
+  );
+  const possibleDaysCount = dailyPoints.length;
+  const [showListView, setShowListView] = useState(false);
   const ribbonRows = useMemo(
     () =>
       AXES.map((a) => {
@@ -220,29 +270,33 @@ export default function Garden() {
             Obraz sześciu obszarów zbudowany z Twoich najczęstszych odpowiedzi w wybranym czasie.
           </Text>
           <WindowPicker current={windowKey} onSelect={setWindowKey} />
-          <BloomOnChange changeKey={windowKey} style={{ alignItems: 'center', marginTop: 16 + AVG_CHROME_PAD }}>
-            <View style={{ width: avgFlowerSize, height: avgFlowerSize }} className="items-center justify-center">
-              <FlowerLazy
-                dna={dna}
-                day={avg}
-                size={avgFlowerSize}
-                dnaSeed={dnaSeed}
-                grain={false}
-                bloomKey={windowKey}
-              />
-              <FlowerChrome
-                size={avgFlowerSize}
-                rotationOffset={dna.rotationOffset}
-                pad={AVG_CHROME_PAD}
-                revealKey={windowKey}
-              />
-            </View>
-            <Text variant="caption" tone="muted" style={{ marginTop: 12 + AVG_CHROME_PAD }}>
-              {windowed.length === 0
-                ? 'brak wpisów w tym okresie'
-                : `${windowed.length} ${windowed.length === 1 ? 'wpis' : 'wpisów'} · ${currentWindow.label}`}
+          {windowed.length < 3 ? (
+            <Text variant="body" tone="muted" style={{ marginTop: 16 }}>
+              {fewEntriesMessage(windowed.length, 'zobaczyć obraz tego okresu')}
             </Text>
-          </BloomOnChange>
+          ) : (
+            <BloomOnChange changeKey={windowKey} style={{ alignItems: 'center', marginTop: 16 + AVG_CHROME_PAD }}>
+              <View style={{ width: avgFlowerSize, height: avgFlowerSize }} className="items-center justify-center">
+                <FlowerLazy
+                  dna={dna}
+                  day={avg}
+                  size={avgFlowerSize}
+                  dnaSeed={dnaSeed}
+                  grain={false}
+                  bloomKey={windowKey}
+                />
+                <FlowerChrome
+                  size={avgFlowerSize}
+                  rotationOffset={dna.rotationOffset}
+                  pad={AVG_CHROME_PAD}
+                  revealKey={windowKey}
+                />
+              </View>
+              <Text variant="caption" tone="muted" style={{ marginTop: 12 + AVG_CHROME_PAD }}>
+                {`Na podstawie ${windowed.length} ${windowed.length === 1 ? 'wpisu' : 'wpisów'} z ostatnich ${possibleDaysCount} dni.`}
+              </Text>
+            </BloomOnChange>
+          )}
         </View>
 
         {/* Sekcja 3b — Profil okresu (rozkład + wstęga) */}
@@ -308,10 +362,66 @@ export default function Garden() {
           <Text variant="h3" style={{ marginBottom: 12 }}>
             Trend obszarów ({currentWindow.label})
           </Text>
-          <BloomOnChange changeKey={windowKey}>
-            <AxisTrendCards cells={sparklineCells} width={contentW} periodLabel={currentWindow.genitive} />
-          </BloomOnChange>
+          {windowed.length < 3 ? (
+            <Text variant="body" tone="muted">
+              {fewEntriesMessage(windowed.length, 'zobaczyć trend obszarów w czasie')}
+            </Text>
+          ) : (
+            <>
+              <BloomOnChange changeKey={windowKey}>
+                <AxisTrendCards cells={sparklineCells} width={contentW} periodLabel={currentWindow.genitive} />
+              </BloomOnChange>
+
+              <View style={{ marginTop: 24 }}>
+                {showListView ? (
+                  <InsightsListView
+                    points={dailyPoints}
+                    onSelectDate={openEntry}
+                    onShowChart={() => setShowListView(false)}
+                  />
+                ) : (
+                  <AxisTrendChart
+                    points={dailyPoints}
+                    width={contentW}
+                    onSelectDate={openEntry}
+                    onShowList={() => setShowListView(true)}
+                  />
+                )}
+              </View>
+            </>
+          )}
         </View>
+
+        {/* Sekcja 5 — Porównanie z poprzednim okresem (ukryte tymczasowo, do dopracowania) */}
+        {false && currentWindow.days !== 'all' && (
+          <View style={{ marginTop: 40 }}>
+            <Text variant="h3" style={{ marginBottom: 8 }}>
+              Porównanie okresów
+            </Text>
+            <Text variant="body" tone="muted" style={{ marginBottom: 16 }}>
+              Jak wypadają ostatnie {currentWindow.label} na tle poprzedniego takiego samego okresu.
+            </Text>
+            {windowed.length < 3 || previousWindowed.length < 3 ? (
+              <Text variant="body" tone="muted">
+                {fewEntriesMessage(
+                  Math.min(windowed.length, previousWindowed.length),
+                  'porównać ten okres z poprzednim',
+                )}
+              </Text>
+            ) : (
+              <PeriodComparison
+                comparisons={comparisons}
+                currentCount={windowed.length}
+                previousCount={previousWindowed.length}
+                currentDay={avg}
+                previousDay={previousAvg}
+                dna={dna}
+                dnaSeed={dnaSeed}
+                width={contentW}
+              />
+            )}
+          </View>
+        )}
 
         {/* Sekcja 6 — Tagi */}
         <View style={{ marginTop: 40 }}>
@@ -319,6 +429,31 @@ export default function Garden() {
             Co Cię spotykało
           </Text>
           <TagsSummary good={tags.good} hard={tags.hard} total={tags.total} />
+        </View>
+
+        {/* Sekcja 6b — Grupy dni wg tagów */}
+        <View style={{ marginTop: 40 }}>
+          <Text variant="h3" style={{ marginBottom: 8 }}>
+            Dobre i trudne dni
+          </Text>
+          <Text variant="body" tone="muted" style={{ marginBottom: 16 }}>
+            Jak wyglądały sześć obszarów w dniach z różnymi tagami — bez sugerowania, że jedno powoduje drugie.
+          </Text>
+          {windowed.length === 0 ? (
+            <Text variant="body" tone="muted">
+              {fewEntriesMessage(0, 'zobaczyć podział na dobre i trudne dni')}
+            </Text>
+          ) : (
+            <MomentGroups groups={groups} coOccurrence={coOccurrence} />
+          )}
+        </View>
+
+        {/* Sekcja 20 — Co zauważyliśmy */}
+        <View style={{ marginTop: 40 }}>
+          <Text variant="h3" style={{ marginBottom: 12 }}>
+            Co zauważyliśmy
+          </Text>
+          <InsightCard insights={insights} entriesCount={windowed.length} confident={confidentInsights} />
         </View>
 
         {/* Sekcja 7 — Chmura słów */}
