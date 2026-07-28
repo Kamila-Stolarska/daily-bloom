@@ -38,7 +38,7 @@ const buttonVariants = cva(
 type PillArrowProps = { tone?: 'ink' | 'paper' };
 function PillArrow({ tone = 'ink' }: PillArrowProps) {
   const bg = tone === 'paper' ? 'bg-paper' : 'bg-ink';
-  const stroke = tone === 'paper' ? '#1A1614' : '#F6F6EA';
+  const stroke = tone === 'paper' ? '#1A1614' : '#FFFFF0';
   return (
     <View className={cn('w-11 h-11 rounded-full items-center justify-center', bg)}>
       <Svg width={14} height={14} viewBox="0 0 14 14">

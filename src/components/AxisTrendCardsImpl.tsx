@@ -39,7 +39,7 @@ type Props = {
 const CORAL = '#FDA674'; // ten sam kolor co gradient kwiatka (pomarańczowy koniec)
 const INK = '#1A1614';
 const MUTED = '#7A6F62';
-const CARD_BG = '#FBFAF1';
+const CARD_BG = 'rgba(255,255,255,0.5)';
 const CARD_BORDER = '#E1D8CE';
 const AXIS_LINE = '#E7DFD2';
 

@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       colors: {
         paper: {
-          DEFAULT: '#F6F6EA',
+          DEFAULT: '#FFFFF0',
           dark: '#EDE5D5',
           warm: '#EFE7D7',
         },

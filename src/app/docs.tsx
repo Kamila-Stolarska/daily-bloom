@@ -48,7 +48,7 @@ function CodeBlock({ code }: { code: string }) {
       <Text
         selectable
         style={{
-          color: '#F6F6EA',
+          color: '#FFFFF0',
           fontFamily: Platform.OS === 'web' ? 'ui-monospace, SFMono-Regular, Menlo, monospace' : undefined,
           fontSize: 12,
           lineHeight: 18,
@@ -74,7 +74,7 @@ function CodeBlock({ code }: { code: string }) {
             backgroundColor: copied ? '#9CB59A' : '#3A3A36',
           }}
         >
-          <Text style={{ color: '#F6F6EA', fontSize: 11, letterSpacing: 1 }}>
+          <Text style={{ color: '#FFFFF0', fontSize: 11, letterSpacing: 1 }}>
             {copied ? 'SKOPIOWANO' : 'KOPIUJ'}
           </Text>
         </Pressable>

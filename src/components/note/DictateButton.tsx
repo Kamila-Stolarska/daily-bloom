@@ -38,7 +38,7 @@ function MicIcon({ size = 18, color = '#1A1614' }: { size?: number; color?: stri
   );
 }
 
-function StopIcon({ size = 14, color = '#F6F6EA' }: { size?: number; color?: string }) {
+function StopIcon({ size = 14, color = '#FFFFF0' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Rect x={5} y={5} width={14} height={14} rx={2} fill={color} />
@@ -101,14 +101,14 @@ export function DictateButton({ onTranscribed, showLabel = false }: Props) {
           paddingVertical: 8,
         }}
       >
-        <StopIcon size={12} color="#F6F6EA" />
+        <StopIcon size={12} color="#FFFFF0" />
         <MotiView
           from={{ opacity: 0.35 }}
           animate={{ opacity: 1 }}
           transition={{ type: 'timing', duration: 700, loop: true, repeatReverse: true }}
-          style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: '#F6F6EA' }}
+          style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: '#FFFFF0' }}
         />
-        <Text variant="caption" style={{ color: '#F6F6EA', fontVariant: ['tabular-nums'] }}>
+        <Text variant="caption" style={{ color: '#FFFFF0', fontVariant: ['tabular-nums'] }}>
           {formatDuration(durationSec)}
         </Text>
       </Pressable>

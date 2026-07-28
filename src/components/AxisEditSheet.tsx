@@ -19,7 +19,7 @@ function IntensityDots({ value, selected }: { value: number; selected: boolean }
   const gap = 6;
   const total = 5;
   const width = total * dotSize + (total - 1) * gap;
-  const filled = selected ? '#F6F6EA' : '#1A1614';
+  const filled = selected ? '#FFFFF0' : '#1A1614';
   const muted = selected ? 'rgba(246,246,234,0.3)' : 'rgba(122,111,98,0.35)';
   return (
     <Svg width={width} height={dotSize}>
@@ -74,7 +74,7 @@ export function AxisEditSheet({ axis, currentValue, onSelect, onClose }: Props) 
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: '#F6F6EA',
+            backgroundColor: '#FFFFF0',
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingHorizontal: 28,

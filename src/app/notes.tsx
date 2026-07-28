@@ -107,7 +107,7 @@ export default function NotesScreen() {
                 justifyContent: 'center',
               }}
             >
-              <SearchIcon size={16} color={searchOpen ? '#F6F6EA' : '#1A1614'} />
+              <SearchIcon size={16} color={searchOpen ? '#FFFFF0' : '#1A1614'} />
             </Pressable>
             <Pressable
               onPress={() => router.push({ pathname: '/note', params: { date: todayIso() } })}
@@ -153,7 +153,7 @@ export default function NotesScreen() {
                 paddingVertical: 12,
                 fontSize: 16,
                 color: '#1A1614',
-                backgroundColor: '#FBFAF1',
+                backgroundColor: '#FFFFFF',
               }}
             />
           </View>

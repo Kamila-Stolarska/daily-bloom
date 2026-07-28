@@ -12,7 +12,7 @@ export function MessageBubble({ role, content }: Props) {
       <View
         className="self-start max-w-[85%] mb-3 px-4 py-3"
         style={{
-          backgroundColor: '#FBFAF1',
+          backgroundColor: 'rgba(255,255,255,0.5)',
           borderColor: '#EDE5D5',
           borderWidth: 1,
           borderRadius: 22,

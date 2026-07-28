@@ -20,7 +20,7 @@ function Card({ label, value, sub }: { label: string; value: string; sub: string
     <View
       style={{
         flex: 1,
-        backgroundColor: '#FBFAF1',
+        backgroundColor: 'rgba(255,255,255,0.5)',
         borderRadius: 12,
         borderWidth: 1,
         borderColor: '#E1D8CE',
