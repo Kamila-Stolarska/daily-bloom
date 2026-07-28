@@ -18,6 +18,8 @@ import {
   filterByWindow,
   streakDays,
   tagsSummary,
+  momentGroups,
+  fewEntriesMessage,
 } from '../lib/stats';
 import { topWords } from '../lib/text/wordCloud';
 
@@ -29,6 +31,7 @@ import { AxisRibbon } from '../components/AxisRibbon';
 import { CalendarHeatmap } from '../components/CalendarHeatmap';
 import { TagsSummary } from '../components/TagsSummary';
 import { WordCloud } from '../components/WordCloud';
+import { MomentGroups } from '../components/MomentGroups';
 
 const WINDOWS = [
   { key: '7', label: '7 dni', days: 7 as const, genitive: 'z 7 dni' },
@@ -114,6 +117,7 @@ export default function Garden() {
 
   const avg = useMemo(() => modeDay(windowed), [windowed]);
   const tags = useMemo(() => tagsSummary(entriesList), [entriesList]);
+  const groups = useMemo(() => momentGroups(windowed), [windowed]);
   const streak = useMemo(() => streakDays(entriesList, today), [entriesList, today]);
   const words = useMemo(() => topWords(notesList, 30), [notesList]);
   const sparklineCells = useMemo(
@@ -318,6 +322,23 @@ export default function Garden() {
             Co Cię spotykało
           </Text>
           <TagsSummary good={tags.good} hard={tags.hard} total={tags.total} />
+        </View>
+
+        {/* Sekcja 6b — Grupy dni wg tagów */}
+        <View style={{ marginTop: 40 }}>
+          <Text variant="h3" style={{ marginBottom: 8 }}>
+            Dobre i trudne dni
+          </Text>
+          <Text variant="body" tone="muted" style={{ marginBottom: 16 }}>
+            Jak wyglądały sześć obszarów w dniach z różnymi tagami — bez sugerowania, że jedno powoduje drugie.
+          </Text>
+          {windowed.length === 0 ? (
+            <Text variant="body" tone="muted">
+              {fewEntriesMessage(0, 'zobaczyć podział na dobre i trudne dni')}
+            </Text>
+          ) : (
+            <MomentGroups groups={groups} coOccurrence={null} />
+          )}
         </View>
 
         {/* Sekcja 7 — Chmura słów */}

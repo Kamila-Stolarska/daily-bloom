@@ -4,6 +4,7 @@
 import type { Entry } from './store';
 import type { Axis, DayData, Scale } from './flower/types';
 import { AXES } from './flower/types';
+import type { MomentGroup, MomentGroupKey } from './insights/types';
 
 function clampScale(n: number): Scale {
   const r = Math.round(n);
@@ -177,4 +178,85 @@ function isoDate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+function dailyBalanceOf(e: Entry): number {
+  return (e.day + e.emotions + e.energy + e.body + e.delight + e.meaning) / 6;
+}
+
+// Precyzyjne średnie okresu (bez clampowania do skali 1–5), zaokrąglone do 1
+// miejsca po przecinku — do wyświetlenia liczb pod kwiatem okresu. `averageDay`
+// zostaje osobno, bo napędza kształt płatków i musi zwracać Scale (integer).
+export function precisePeriodAverages(entries: Entry[]): {
+  day: number | null;
+  emotions: number | null;
+  energy: number | null;
+  body: number | null;
+  delight: number | null;
+  meaning: number | null;
+  dailyBalance: number | null;
+} {
+  if (entries.length === 0) {
+    return { day: null, emotions: null, energy: null, body: null, delight: null, meaning: null, dailyBalance: null };
+  }
+  const sum: Record<Axis, number> = { day: 0, emotions: 0, energy: 0, body: 0, delight: 0, meaning: 0 };
+  let balanceSum = 0;
+  for (const e of entries) {
+    for (const a of AXES) sum[a] += e[a];
+    balanceSum += dailyBalanceOf(e);
+  }
+  const n = entries.length;
+  return {
+    day: round1(sum.day / n),
+    emotions: round1(sum.emotions / n),
+    energy: round1(sum.energy / n),
+    body: round1(sum.body / n),
+    delight: round1(sum.delight / n),
+    meaning: round1(sum.meaning / n),
+    dailyBalance: round1(balanceSum / n),
+  };
+}
+
+// Cztery grupy dni wg tagów: tylko dobre / tylko trudne / oba / żaden.
+export function momentGroups(entries: Entry[]): Record<MomentGroupKey, MomentGroup> {
+  const buckets: Record<MomentGroupKey, Entry[]> = { onlyGood: [], onlyHard: [], both: [], neither: [] };
+  for (const e of entries) {
+    const key: MomentGroupKey = e.somethingGood && e.somethingHard
+      ? 'both'
+      : e.somethingGood
+        ? 'onlyGood'
+        : e.somethingHard
+          ? 'onlyHard'
+          : 'neither';
+    buckets[key].push(e);
+  }
+  const toGroup = (key: MomentGroupKey): MomentGroup => {
+    const list = buckets[key];
+    const avg = precisePeriodAverages(list);
+    return {
+      key,
+      count: list.length,
+      averages: {
+        day: avg.day, emotions: avg.emotions, energy: avg.energy,
+        body: avg.body, delight: avg.delight, meaning: avg.meaning,
+      },
+      dailyBalance: avg.dailyBalance,
+    };
+  };
+  return {
+    onlyGood: toGroup('onlyGood'),
+    onlyHard: toGroup('onlyHard'),
+    both: toGroup('both'),
+    neither: toGroup('neither'),
+  };
+}
+
+// Komunikaty dla 0 wpisów — cieplejsze niż standardowe "za mało danych".
+export function fewEntriesMessage(count: number, subject: string): string {
+  if (count === 0) return `Jeszcze pusto — zapisz pierwszy dzień, aby ${subject}.`;
+  return `Dodaj jeszcze kilka wpisów, aby ${subject}.`;
 }
