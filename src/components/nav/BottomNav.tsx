@@ -102,7 +102,7 @@ export function BottomNav({ floating = true }: { floating?: boolean }) {
         ...(floating
           ? { position: 'absolute', left: 0, right: 0, bottom: 0 }
           : null),
-        backgroundColor: '#F6F6EA',
+        backgroundColor: '#FFFFF0',
         borderTopColor: '#E1D8CE',
         borderTopWidth: 1,
         paddingBottom: Math.max(6, insets.bottom),

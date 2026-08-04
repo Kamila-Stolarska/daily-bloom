@@ -101,7 +101,7 @@ export default function ChatScreen() {
               backgroundColor: '#1A1614',
             }}
           >
-            <ShopIcon size={17} color="#F6F6EA" />
+            <ShopIcon size={17} color="#FFFFF0" />
           </Pressable>
         </View>
         <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -198,7 +198,7 @@ export default function ChatScreen() {
                       void send(q);
                     }}
                     style={{
-                      backgroundColor: '#FBFAF1',
+                      backgroundColor: 'rgba(255,255,255,0.5)',
                       borderColor: '#E1D8CE',
                       borderWidth: 1,
                       borderRadius: 18,
@@ -238,13 +238,13 @@ export default function ChatScreen() {
             paddingBottom: 12,
             borderTopColor: '#EDE5D5',
             borderTopWidth: 1,
-            backgroundColor: '#F6F6EA',
+            backgroundColor: '#FFFFF0',
           }}
         >
           <View
             className="flex-row items-end"
             style={{
-              backgroundColor: '#FBFAF1',
+              backgroundColor: 'rgba(255,255,255,0.5)',
               borderColor: '#E1D8CE',
               borderWidth: 1,
               borderRadius: 24,

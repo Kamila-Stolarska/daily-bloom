@@ -129,7 +129,7 @@ export function CalendarHeatmap({
                     width: TILE,
                     height: TILE,
                     borderRadius: 8,
-                    backgroundColor: '#FBFAF2',
+                    backgroundColor: 'rgba(255,255,255,0.5)',
                     borderWidth: isToday ? 1.5 : 1,
                     borderColor: isToday ? '#1A1614' : '#E7DFD2',
                     alignItems: 'center',

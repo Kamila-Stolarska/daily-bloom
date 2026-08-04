@@ -350,7 +350,7 @@ export default function Home() {
             // text-* przy dynamicznej zmianie propa, więc po przeklikiwaniu dni
             // stary `text-paper` zostawał w className i numery stawały się
             // kremowe na kremowym tle (niewidoczne).
-            const numColor = isSelected ? '#F6F6EA' : isTodayCell ? '#1A1614' : '#7A6F62';
+            const numColor = isSelected ? '#FFFFF0' : isTodayCell ? '#1A1614' : '#7A6F62';
             const labelColor = isSelected ? '#1A1614' : '#7A6F62';
             return (
               <Pressable
@@ -445,7 +445,7 @@ export default function Home() {
               position: 'absolute',
               top: 56,
               right: 20,
-              backgroundColor: '#F6F6EA',
+              backgroundColor: '#FFFFF0',
               borderRadius: 12,
               paddingVertical: 6,
               minWidth: 200,

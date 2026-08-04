@@ -392,7 +392,7 @@ function WindowPicker({
           >
             <Text
               variant="caption"
-              style={{ color: active ? '#F6F6EA' : '#1A1614', letterSpacing: 0.3 }}
+              style={{ color: active ? '#FFFFF0' : '#1A1614', letterSpacing: 0.3 }}
             >
               {w.label}
             </Text>

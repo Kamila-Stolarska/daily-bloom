@@ -43,7 +43,7 @@ export function StreamingDot() {
     <View
       className="self-start mb-3 px-4 py-3 flex-row items-center"
       style={{
-        backgroundColor: '#FBFAF1',
+        backgroundColor: 'rgba(255,255,255,0.5)',
         borderColor: '#EDE5D5',
         borderWidth: 1,
         borderRadius: 22,

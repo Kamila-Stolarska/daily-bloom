@@ -183,8 +183,10 @@ export default function NoteScreen() {
         <View
           style={{
             minHeight: composerPaperHeight,
-            backgroundColor: '#FBFAF1',
+            backgroundColor: 'rgba(255,255,255,0.5)',
             borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#E1D8CE',
             paddingHorizontal: 18,
             paddingTop: 12,
             paddingBottom: 12,

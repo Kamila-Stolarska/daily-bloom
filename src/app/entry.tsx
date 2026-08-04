@@ -79,7 +79,7 @@ function IntensityDots({ value, selected }: { value: number; selected: boolean }
   const gap = 6;
   const total = 5;
   const width = total * dotSize + (total - 1) * gap;
-  const filled = selected ? '#F6F6EA' : '#1A1614';
+  const filled = selected ? '#FFFFF0' : '#1A1614';
   const muted = selected ? 'rgba(246,246,234,0.3)' : 'rgba(122,111,98,0.35)';
   const pulse = useSharedValue(1);
   const wasSelected = useRef(selected);
@@ -148,7 +148,7 @@ function OptionRow({
   }, [selected, sel]);
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    backgroundColor: interpolateColor(sel.value, [0, 1], ['#F6F6EA', '#1A1614']),
+    backgroundColor: interpolateColor(sel.value, [0, 1], ['#FFFFF0', '#1A1614']),
     borderColor: interpolateColor(sel.value, [0, 1], ['rgba(122,111,98,0.25)', '#1A1614']),
   }));
   return (
