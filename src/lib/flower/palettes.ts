@@ -13,13 +13,13 @@ export type Palette = {
 
 export const PALETTES: readonly Palette[] = [
   {
-    // Inspirowana referencją użytkownika: korale, róż, pomarańcz + chłodny turkus/lila.
+    // Inspirowana referencją użytkownika (kwiatek-powitalny 9.svg): korale, róż, pomarańcz.
     name: 'Akwarela',
     bg: '#F5EFE4',
     aura: '#E8B85C',
     shadow: '#3A1F1A',
     pestil: '#7A2E3B',
-    petals: ['#E8523C', '#F08A6B', '#D63D5A', '#F2B07A', '#7BA9A3', '#B58AC0'],
+    petals: ['#E9705B', '#EA947F', '#C790B5', '#E9705B', '#C33445', '#CD2847'],
   },
   {
     name: 'Świt',

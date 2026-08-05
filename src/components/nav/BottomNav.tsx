@@ -8,8 +8,8 @@ import { Text } from '../ui/text';
 
 export const BOTTOM_NAV_CONTENT_HEIGHT = 58;
 
-const INK = '#1A1614';
-const INK_MUTED = '#7A6F62';
+const NAV_BG = '#1B1614';
+const ICON_COLOR = '#FFFFF0';
 
 function HomeIcon({ color }: { color: string }) {
   return (
@@ -102,9 +102,7 @@ export function BottomNav({ floating = true }: { floating?: boolean }) {
         ...(floating
           ? { position: 'absolute', left: 0, right: 0, bottom: 0 }
           : null),
-        backgroundColor: '#FFFFF0',
-        borderTopColor: '#E1D8CE',
-        borderTopWidth: 1,
+        backgroundColor: NAV_BG,
         paddingBottom: Math.max(6, insets.bottom),
         paddingTop: 8,
       }}
@@ -112,7 +110,6 @@ export function BottomNav({ floating = true }: { floating?: boolean }) {
       <View style={{ flexDirection: 'row' }}>
         {TABS.map(({ key, label, route, Icon }) => {
           const active = isActive(pathname, route);
-          const color = active ? INK : INK_MUTED;
           return (
             <Pressable
               key={key}
@@ -121,26 +118,27 @@ export function BottomNav({ floating = true }: { floating?: boolean }) {
               }}
               accessibilityRole="button"
               accessibilityLabel={label}
-              style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 4 }}
+              style={{ flex: 1, alignItems: 'center', paddingVertical: 4 }}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 26,
-                  borderRadius: 13,
+                  width: '100%',
+                  maxWidth: 80,
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: active ? '#EDE5D5' : 'transparent',
+                  gap: 4,
+                  paddingVertical: 5,
+                  borderRadius: 1000,
+                  backgroundColor: active ? 'rgba(254,255,238,0.1)' : 'transparent',
                 }}
               >
-                <Icon color={color} />
+                <Icon color={ICON_COLOR} />
+                <Text
+                  variant="mono"
+                  style={{ color: ICON_COLOR, fontSize: 10, letterSpacing: 0.3 }}
+                >
+                  {label}
+                </Text>
               </View>
-              <Text
-                variant="mono"
-                style={{ color, fontSize: 10, letterSpacing: 0.3 }}
-              >
-                {label}
-              </Text>
             </Pressable>
           );
         })}

@@ -46,9 +46,9 @@ const MONTHS_PL = [
 ];
 const WEEKDAY_FULL_PL = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
 
-function formatDayLabel(iso: string): string {
+function formatDayShortLabel(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
-  return `${WEEKDAY_FULL_PL[d.getDay()]}, ${d.getDate()} ${MONTHS_PL[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_PL[d.getMonth()]}`;
 }
 
 export default function Home() {
@@ -144,11 +144,11 @@ export default function Home() {
   }
 
   if (!hydrated || !name) {
-    return <SafeAreaView className="flex-1 bg-paper" />;
+    return <SafeAreaView className="flex-1 bg-white" />;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -211,16 +211,30 @@ export default function Home() {
                 style={{ width: flowerSize, height: flowerSize }}
                 className="items-center justify-center"
               >
+                <View
+                  style={{ position: 'absolute', width: flowerSize, height: flowerSize }}
+                  pointerEvents="none"
+                >
+                  <FlowerLazy
+                    dna={dna}
+                    day={{ ...NEUTRAL_DAY, dateIso: selectedDate }}
+                    size={flowerSize}
+                    dnaSeed={dnaSeed}
+                    referenceGrid
+                    symmetric
+                  />
+                </View>
                 <FlowerLazy
                   dna={dna}
                   day={entryToDayData(selectedEntry, notesLength(selectedNotes))}
                   size={flowerSize}
                   dnaSeed={dnaSeed}
                   grain={false}
+                  symmetric
                 />
                 <FlowerChrome
                   size={flowerSize}
-                  showGrid
+                  showGrid={false}
                   pad={CHROME_PAD}
                   revealKey={selectedDate}
                   onAxisPress={(axis) => setEditingAxis(axis)}
@@ -290,25 +304,28 @@ export default function Home() {
           </Pressable>
         </View>
 
-        {/* Data wybranego dnia */}
-        <Text variant="bodyMedium" tone="ink" style={{ marginBottom: tight ? 8 : 12 }}>
-          {formatDayLabel(selectedDate)}
-        </Text>
-
-        {/* Nawigacja tygodnia — strzałki + zakres + skok do dziś */}
+        {/* Nawigacja tygodnia — data + zakres wyśrodkowane, strzałki w obwódkowanych kółkach */}
         <View
           className="flex-row items-center justify-between"
-          style={{ marginBottom: tight ? 6 : 10 }}
+          style={{ marginBottom: tight ? 10 : 14 }}
         >
           <Pressable
             onPress={() => setWeekOffset((o) => o - 1)}
-            hitSlop={12}
+            hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="poprzedni tydzień"
-            style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: '#E2E2D2',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Text variant="body" tone="ink" style={{ fontSize: 20 }}>
-              ←
+            <Text variant="body" tone="ink" style={{ fontSize: 16 }}>
+              ‹
             </Text>
           </Pressable>
           <Pressable
@@ -319,21 +336,34 @@ export default function Home() {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="skocz do dziś"
+            className="items-center"
           >
-            <Text variant="caption" tone="muted" style={{ letterSpacing: 0.5 }}>
-              {weekOffset === 0 ? 'TEN TYDZIEŃ' : weekRangeLabel}
+            <Text variant="bodyMedium" tone="ink">
+              {formatDayShortLabel(selectedDate)}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {weekOffset === 0 ? 'Ten tydzień' : weekRangeLabel}
             </Text>
           </Pressable>
           <Pressable
             onPress={() => setWeekOffset((o) => Math.min(0, o + 1))}
-            hitSlop={12}
+            hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="następny tydzień"
             disabled={weekOffset >= 0}
-            style={{ paddingHorizontal: 8, paddingVertical: 4, opacity: weekOffset >= 0 ? 0.3 : 1 }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: '#E2E2D2',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: weekOffset >= 0 ? 0.3 : 1,
+            }}
           >
-            <Text variant="body" tone="ink" style={{ fontSize: 20 }}>
-              →
+            <Text variant="body" tone="ink" style={{ fontSize: 16 }}>
+              ›
             </Text>
           </Pressable>
         </View>
@@ -369,10 +399,8 @@ export default function Home() {
                   {WEEKDAYS_PL[i][0].toUpperCase() + WEEKDAYS_PL[i].slice(1)}
                 </Text>
                 <View
-                  className={
-                    'w-9 h-9 rounded-full items-center justify-center ' +
-                    (isSelected ? 'bg-ink' : '')
-                  }
+                  className={'w-9 h-9 items-center justify-center ' + (isSelected ? 'bg-ink' : '')}
+                  style={{ borderRadius: isSelected ? 12 : 18 }}
                 >
                   <Text variant="bodyMedium" style={{ color: numColor }}>
                     {dayNum}

@@ -21,7 +21,7 @@ import { Dna } from '../lib/flower/dna';
 import { PALETTES } from '../lib/flower/palettes';
 import { organicPetalPath, petalJitter } from '../lib/flower/organic';
 import { withSaturation } from '../lib/flower/color';
-import { DayData, AXES } from '../lib/flower/types';
+import { DayData, AXES, scaleFor } from '../lib/flower/types';
 
 type Props = {
   dna: Dna;
@@ -32,8 +32,12 @@ type Props = {
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
+  /** Statyczna siatka skali 1–5 (zagnieżdżone kontury per oś) — tło-legenda za realnym kwiatkiem. */
+  referenceGrid?: boolean;
   /** Wyłącz animację rozkwitania (np. w stats, kiedy zmieniamy dużo na raz). */
   animate?: boolean;
+  /** Kąty płatków dokładnie i*60° (bez jitter) — do zgodności z etykietami FlowerChrome, które nie mają jittera. */
+  symmetric?: boolean;
 };
 
 const scaleToUnit = (v: number) => (v - 1) / 4;
@@ -103,7 +107,9 @@ function petalTransform(petal: PetalRender, index: number, cx: number, cy: numbe
 export const OrganicFlower = React.memo(function OrganicFlower({
   dna, day, size, dnaSeed, grain = false,
   outline = false, outlineColor = '#E1D8CE', outlineWidth = 1,
+  referenceGrid = false,
   animate = true,
+  symmetric = false,
 }: Props) {
   const palette = PALETTES[dna.paletteIndex % PALETTES.length];
   const cx = size / 2;
@@ -114,7 +120,7 @@ export const OrganicFlower = React.memo(function OrganicFlower({
   // length(v) = legendR * v/5, więc wierzchołek płatka o odpowiedzi k leży dokładnie
   // na pierścieniu k. To wymóg data-viz: oś z formularza = pozycja na siatce.
   const legendR = size * 0.48;
-  const lenFor = (v: number) => legendR * (v / 5);
+  const lenFor = (v: number) => legendR * scaleFor(v);
 
   // 6 osi = 6 własnych płatków (kolejność z AXES: day, emotions, energy, body, delight, meaning).
   const lengths = [
@@ -128,6 +134,10 @@ export const OrganicFlower = React.memo(function OrganicFlower({
 
   const satFactor = 0.55 + scaleToUnit(day.emotions) * 0.45;
   const petalBaseWidth = baseR * 0.26;
+  // W trybie symmetric (home) płatki pełniejsze — szerokość liczona proporcjonalnie
+  // do DŁUGOŚCI KAŻDEGO płatka (nie stały baseR), inaczej krótkie płatki (niskie wartości
+  // osi) robią się szersze niż dłuższe i zapadają się w bezkształtną plamę.
+  const SYMMETRIC_WIDTH_RATIO = 0.34;
 
   // Pre-compute wszystkich płatków raz — używane dwukrotnie (color + grain).
   const petals: PetalRender[] = useMemo(
@@ -135,8 +145,10 @@ export const OrganicFlower = React.memo(function OrganicFlower({
       const jitter = petalJitter(dnaSeed, i);
       // UWAGA: nie używamy jitter.lengthScale — długość MUSI być dokładna (skala 1–5 → pierścień).
       const length = lengths[i];
-      const width = petalBaseWidth * jitter.widthScale;
-      const angleDeg = i * 60 + jitter.angleOffset;
+      const width = symmetric
+        ? length * SYMMETRIC_WIDTH_RATIO
+        : petalBaseWidth * jitter.widthScale;
+      const angleDeg = symmetric ? i * 60 : i * 60 + jitter.angleOffset;
       const angleRad = (angleDeg * Math.PI) / 180;
       const path = organicPetalPath(length, width, jitter.pathSeed);
       const tipHex = withSaturation(palette.petals[i], satFactor);
@@ -144,13 +156,63 @@ export const OrganicFlower = React.memo(function OrganicFlower({
       return { path, length, width, angleRad, tipHex, baseHex };
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dnaSeed, palette, satFactor, day.day, day.emotions, day.energy, day.body, day.delight, day.meaning, petalBaseWidth],
+    [dnaSeed, palette, satFactor, day.day, day.emotions, day.energy, day.body, day.delight, day.meaning, petalBaseWidth, symmetric],
   );
 
   const progress = useBloomProgress(animate, [
     dnaSeed, day.day, day.energy, day.body, day.delight, day.meaning, day.emotions,
     day.dateIso, outline,
   ]);
+
+  // Siatka-legenda: dla każdej osi 5 zagnieżdżonych, samopodobnych konturów płatka
+  // (wartości 1–5, ten sam kształt/seed przeskalowany) — odpowiednik pierścieni
+  // FlowerChrome, ale w kształcie płatka danej osi. Wypełnienie + cienki kontur na
+  // każdym pierścieniu, rysowane od największego do najmniejszego.
+  if (referenceGrid) {
+    return (
+      <Canvas style={{ width: size, height: size }}>
+        {AXES.map((_axis, i) => {
+          const jitter = petalJitter(dnaSeed, i);
+          // Ten sam kąt co realny płatek (ten sam dnaSeed/index) — siatka MUSI
+          // pokrywać się z rzeczywistym płatkiem danej osi, inaczej wygląda krzywo.
+          const angleDeg = symmetric ? i * 60 : i * 60 + jitter.angleOffset;
+          const angleRad = (angleDeg * Math.PI) / 180;
+          // Siatka zawsze rysuje ring 5 na pełnym legendR — szerokość liczona od tej samej
+          // podstawy, żeby proporcje pokrywały się z realnym płatkiem (który skaluje width
+          // od własnej długości).
+          const width = symmetric ? legendR * SYMMETRIC_WIDTH_RATIO : petalBaseWidth * jitter.widthScale;
+          return (
+            <Group
+              key={`grid-${i}`}
+              transform={[{ translateX: cx }, { translateY: cy }, { rotate: angleRad }]}
+            >
+              {[5, 4, 3, 2, 1].map((v) => {
+                const scale = scaleFor(v);
+                const path = organicPetalPath(lenFor(v), width * scale, jitter.pathSeed);
+                return (
+                  <React.Fragment key={`ring-${i}-${v}`}>
+                    <Path path={path} style="fill" color="#FFDFFF" />
+                    <Path path={path} style="stroke" strokeWidth={0.6} color="#B4B4B4" />
+                  </React.Fragment>
+                );
+              })}
+              {/* Lekki noise na różowym tle skali — subtelny, żeby nie zdominować cienkich linii. */}
+              <Group blendMode="multiply" opacity={0.12}>
+                <Path path={organicPetalPath(lenFor(5), width, jitter.pathSeed)}>
+                  <Turbulence
+                    freqX={1.4}
+                    freqY={1.4}
+                    octaves={2}
+                    seed={(dnaSeed ^ (i * 5237)) & 0xffff}
+                  />
+                </Path>
+              </Group>
+            </Group>
+          );
+        })}
+      </Canvas>
+    );
+  }
 
   if (outline) {
     return (

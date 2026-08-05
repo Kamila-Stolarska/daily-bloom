@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/ui/text';
 import { useStore } from '../lib/store';
 import { seedTestWeek, clearTestWeek, seedLongHistory, clearLongHistory, clearChatHistory } from '../lib/dev/seed';
+import { WelcomeFlowerPreview } from '../components/WelcomeFlowerPreview';
 
 function DevTools() {
   const hydrate = useStore((s) => s.hydrate);
@@ -133,6 +134,7 @@ export default function Lab() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <DevTools />
+      <WelcomeFlowerPreview />
       <Suspense
         fallback={
           <View className="flex-1 items-center justify-center">
