@@ -132,7 +132,7 @@ export default function Lab() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-white">
       <DevTools />
       <WelcomeFlowerPreview />
       <Suspense

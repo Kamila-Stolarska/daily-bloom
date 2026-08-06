@@ -192,7 +192,7 @@ export const OrganicFlower = React.memo(function OrganicFlower({
                 return (
                   <React.Fragment key={`ring-${i}-${v}`}>
                     <Path path={path} style="fill" color="#FFDFFF" />
-                    <Path path={path} style="stroke" strokeWidth={0.6} color="#B4B4B4" />
+                    <Path path={path} style="stroke" strokeWidth={0.6} color="#E1C7F2" />
                   </React.Fragment>
                 );
               })}

@@ -74,7 +74,7 @@ export function AxisEditSheet({ axis, currentValue, onSelect, onClose }: Props) 
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: '#FFFFF0',
+            backgroundColor: '#FFFFFF',
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingHorizontal: 28,

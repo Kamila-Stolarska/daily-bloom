@@ -84,12 +84,24 @@ export function CalendarHeatmap({
     <View>
       {/* Nawigacja miesięczna */}
       <View className="flex-row items-center justify-between" style={{ marginBottom: 12 }}>
-        <Pressable onPress={onPrev} hitSlop={12} accessibilityLabel="poprzedni miesiąc" style={{ padding: 6 }}>
-          <Text variant="body" style={{ fontSize: 18 }}>‹</Text>
+        <Pressable
+          onPress={onPrev}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="poprzedni miesiąc"
+          style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: '#E2E2D2', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text variant="body" tone="ink" style={{ fontSize: 16 }}>‹</Text>
         </Pressable>
         <Text variant="bodyMedium">{label}</Text>
-        <Pressable onPress={onNext} hitSlop={12} accessibilityLabel="następny miesiąc" style={{ padding: 6 }}>
-          <Text variant="body" style={{ fontSize: 18 }}>›</Text>
+        <Pressable
+          onPress={onNext}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="następny miesiąc"
+          style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: '#E2E2D2', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text variant="body" tone="ink" style={{ fontSize: 16 }}>›</Text>
         </Pressable>
       </View>
 

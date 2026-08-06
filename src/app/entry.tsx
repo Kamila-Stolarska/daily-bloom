@@ -307,7 +307,7 @@ export default function EntryScreen() {
   const stepNumber = step.kind === 'axis' ? step.index + 1 : total;
 
   if (!hydrated) {
-    return <SafeAreaView className="flex-1 bg-paper" />;
+    return <SafeAreaView className="flex-1 bg-white" />;
   }
 
   // ---- AXIS ----
@@ -315,7 +315,7 @@ export default function EntryScreen() {
     const q = AXIS_QUESTIONS[step.index];
     const value = draft[q.axis];
     return (
-      <SafeAreaView className="flex-1 bg-paper">
+      <SafeAreaView className="flex-1 bg-white">
         <TopBar
           left={
             <Pressable onPress={back}>
@@ -364,14 +364,27 @@ export default function EntryScreen() {
   // ---- BLOOM ----
   if (step.kind === 'bloom' && savedEntry) {
     return (
-      <SafeAreaView className="flex-1 bg-paper">
+      <SafeAreaView className="flex-1 bg-white">
         <TopBar left={<Text variant="eyebrow">ZAKWITŁO</Text>} />
         <View className="flex-1 items-center justify-center px-6">
           <View style={{ width: 340, height: 340 }} className="items-center justify-center">
-            <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} />
+            <View
+              style={{ position: 'absolute', width: 340, height: 340 }}
+              pointerEvents="none"
+            >
+              <FlowerLazy
+                dna={dna}
+                day={entryToDayData(savedEntry, noteText.length)}
+                size={340}
+                dnaSeed={dnaSeed}
+                referenceGrid
+                symmetric
+              />
+            </View>
+            <FlowerLazy dna={dna} day={entryToDayData(savedEntry, noteText.length)} size={340} dnaSeed={dnaSeed} symmetric />
             <FlowerChrome
               size={340}
-              showGrid
+              showGrid={false}
               pad={40}
               revealKey={savedEntry.date}
             />
@@ -401,7 +414,7 @@ export default function EntryScreen() {
     const composerPaperHeight = linesInComposer * LINE_HEIGHT + 24;
     const hasText = !!noteText.trim();
     return (
-      <SafeAreaView className="flex-1 bg-paper">
+      <SafeAreaView className="flex-1 bg-white">
         <View className="px-7 pt-6 flex-row items-center justify-between">
           <Pressable onPress={() => setStep({ kind: 'bloom' })}>
             <Text variant="bodyMedium">←</Text>
@@ -480,5 +493,5 @@ export default function EntryScreen() {
     );
   }
 
-  return <SafeAreaView className="flex-1 bg-paper" />;
+  return <SafeAreaView className="flex-1 bg-white" />;
 }

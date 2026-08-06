@@ -473,7 +473,7 @@ export default function Home() {
               position: 'absolute',
               top: 56,
               right: 20,
-              backgroundColor: '#FFFFF0',
+              backgroundColor: '#FFFFFF',
               borderRadius: 12,
               paddingVertical: 6,
               minWidth: 200,

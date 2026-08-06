@@ -64,7 +64,7 @@ export default function SearchScreen() {
   }, [query]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFF0' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <View style={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Text style={{ fontSize: 16 }}>← Wstecz</Text>
