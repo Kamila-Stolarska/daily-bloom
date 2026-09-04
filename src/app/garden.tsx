@@ -337,7 +337,7 @@ export default function Garden() {
               {fewEntriesMessage(0, 'zobaczyć podział na dobre i trudne dni')}
             </Text>
           ) : (
-            <MomentGroups groups={groups} coOccurrence={null} />
+            <MomentGroups groups={groups} coOccurrence={null} width={contentW} />
           )}
         </View>
 

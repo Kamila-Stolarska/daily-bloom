@@ -3,7 +3,7 @@
 // "coś dobrego/trudnego" na wykresie trendu. Bez sugerowania, że tag sam w
 // sobie powoduje zmianę wyników.
 
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { Text } from './ui/text';
 import { AXES, AXIS_LABELS_PL, type Axis } from '../lib/flower/types';
@@ -12,6 +12,7 @@ import type { MomentGroup, MomentGroupKey } from '../lib/insights/types';
 type Props = {
   groups: Record<MomentGroupKey, MomentGroup>;
   coOccurrence: string | null;
+  width: number;
 };
 
 const GOOD_COLOR = '#9461FC'; // jak znacznik "coś dobrego" na wykresie trendu
@@ -114,9 +115,8 @@ function GroupCard({ group, kind }: { group: MomentGroup; kind: 'onlyGood' | 'on
   );
 }
 
-export function MomentGroups({ groups }: Props) {
-  const { width } = useWindowDimensions();
-  const isTablet = width >= 640;
+export function MomentGroups({ groups, width }: Props) {
+  const isTablet = width >= 480;
   return (
     <View>
       <View style={{ flexDirection: isTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 12 }}>
