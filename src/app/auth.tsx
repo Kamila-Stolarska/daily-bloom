@@ -90,7 +90,7 @@ export default function Auth() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
@@ -102,7 +102,7 @@ export default function Auth() {
         >
           <View className="items-center pt-10" style={{ width: 210, height: 210, alignSelf: 'center' }}>
             <Animated.View style={flowerAnimStyle}>
-              <FlowerLazy dna={welcomeDna} day={WELCOME_DAY} size={210} dnaSeed={welcomeDnaSeed} grain />
+              <FlowerLazy dna={welcomeDna} day={WELCOME_DAY} size={210} dnaSeed={welcomeDnaSeed} grain symmetric />
             </Animated.View>
           </View>
 

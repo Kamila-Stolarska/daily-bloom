@@ -16,6 +16,8 @@ type Props = {
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
+  referenceGrid?: boolean;
+  symmetric?: boolean;
 };
 
 export function FlowerLazy(props: Props) {

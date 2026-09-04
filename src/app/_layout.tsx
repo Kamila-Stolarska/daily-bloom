@@ -77,7 +77,7 @@ export default function RootLayout() {
   });
 
   if (!fontsLoaded) {
-    return <View className="flex-1 bg-paper" />;
+    return <View className="flex-1 bg-white" />;
   }
 
   const tree = (
@@ -87,7 +87,7 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#FFFFF0' },
+          contentStyle: { backgroundColor: '#FFFFFF' },
           animation: 'fade',
         }}
       />

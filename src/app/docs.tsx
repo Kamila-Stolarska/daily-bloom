@@ -135,7 +135,7 @@ export default function DocsScreen() {
   const baseUrl = getBaseUrl();
 
   return (
-    <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: horizontalPad,

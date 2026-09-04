@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text as RNText, View } from 'react-native';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
-import { AXES, type Axis } from '../lib/flower/types';
+import { AXES, scaleFor, type Axis } from '../lib/flower/types';
 
 const LABELS: Record<(typeof AXES)[number], string> = {
   day: 'DZIEŃ',
@@ -96,7 +96,7 @@ export function FlowerChrome({
           <G opacity={0.18}>
             {/* Pierścienie skali 1–5 */}
             {Array.from({ length: rings }).map((_, i) => {
-              const r = baseR * ((i + 1) / rings);
+              const r = baseR * scaleFor(i + 1);
               return (
                 <Circle
                   key={`ring-${i}`}
@@ -141,6 +141,9 @@ export function FlowerChrome({
         const y = cy - labelR * Math.cos(rad);
         const labelW = 90;
         const labelH = 28;
+        // Etykieta styczna do okręgu (jak na cyferblacie) — u góry/dołu pozioma,
+        // po skosach obrócona wzdłuż stycznej, znormalizowana do (-90, 90], żeby nigdy nie była do góry nogami.
+        const rotDeg = ((deg + 90) % 180) - 90;
         const handlePress = onAxisPress ? () => onAxisPress(axis) : undefined;
         return (
           <Pressable
@@ -166,6 +169,7 @@ export function FlowerChrome({
                 fontFamily: 'Inter_500Medium',
                 letterSpacing: 1.6,
                 textAlign: 'center',
+                transform: [{ rotate: `${rotDeg}deg` }],
               }}
             >
               {LABELS[axis]}

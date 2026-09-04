@@ -80,7 +80,7 @@ export default function ChatScreen() {
   const showWelcome = hydrated && messages.length === 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-paper" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Topbar */}
       <View style={{ paddingHorizontal: horizontalPad, paddingTop: topPad, paddingBottom: 8 }}>
         <View className="flex-row items-start justify-between" style={{ marginBottom: 14 }}>
@@ -238,7 +238,7 @@ export default function ChatScreen() {
             paddingBottom: 12,
             borderTopColor: '#EDE5D5',
             borderTopWidth: 1,
-            backgroundColor: '#FFFFF0',
+            backgroundColor: '#FFFFFF',
           }}
         >
           <View

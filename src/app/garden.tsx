@@ -166,14 +166,14 @@ export default function Garden() {
   };
 
   if (!hydrated) {
-    return <SafeAreaView className="flex-1 bg-paper" />;
+    return <SafeAreaView className="flex-1 bg-white" />;
   }
 
   const avgFlowerSize = Math.min(220, contentW * 0.7);
   const AVG_CHROME_PAD = 40;
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -227,15 +227,30 @@ export default function Garden() {
           <WindowPicker current={windowKey} onSelect={setWindowKey} />
           <BloomOnChange changeKey={windowKey} style={{ alignItems: 'center', marginTop: 16 + AVG_CHROME_PAD }}>
             <View style={{ width: avgFlowerSize, height: avgFlowerSize }} className="items-center justify-center">
+              <View
+                style={{ position: 'absolute', width: avgFlowerSize, height: avgFlowerSize }}
+                pointerEvents="none"
+              >
+                <FlowerLazy
+                  dna={dna}
+                  day={avg}
+                  size={avgFlowerSize}
+                  dnaSeed={dnaSeed}
+                  referenceGrid
+                  symmetric
+                />
+              </View>
               <FlowerLazy
                 dna={dna}
                 day={avg}
                 size={avgFlowerSize}
                 dnaSeed={dnaSeed}
                 grain={false}
+                symmetric
               />
               <FlowerChrome
                 size={avgFlowerSize}
+                showGrid={false}
                 pad={AVG_CHROME_PAD}
                 revealKey={windowKey}
               />
@@ -268,6 +283,7 @@ export default function Garden() {
                   size={28}
                   dnaSeed={dnaSeed}
                   grain={false}
+                  symmetric
                 />
               </View>
               <Text variant="caption" tone="muted">Najczęściej wybierana odpowiedź</Text>

@@ -133,14 +133,14 @@ export default function NoteScreen() {
   }
 
   if (!hydrated) {
-    return <SafeAreaView className="flex-1 bg-paper" />;
+    return <SafeAreaView className="flex-1 bg-white" />;
   }
 
   const linesInComposer = Math.max(6, Math.floor(composerHeight / LINE_HEIGHT));
   const composerPaperHeight = linesInComposer * LINE_HEIGHT + 24;
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-white">
       <View className="px-7 pt-6 flex-row items-center justify-between">
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
           <Text variant="bodyMedium">←</Text>

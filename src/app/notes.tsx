@@ -66,11 +66,11 @@ export default function NotesScreen() {
   }, [groups, query]);
 
   if (!hydrated) {
-    return <SafeAreaView className="flex-1 bg-paper" />;
+    return <SafeAreaView className="flex-1 bg-white" />;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
