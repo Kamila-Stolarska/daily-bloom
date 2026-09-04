@@ -80,7 +80,6 @@ function GroupCard({ group, kind }: { group: MomentGroup; kind: 'onlyGood' | 'on
     <View
       style={{
         flex: 1,
-        minWidth: '47%',
         backgroundColor: 'rgba(255,255,255,0.5)',
         borderRadius: 12,
         borderWidth: 1,
@@ -119,7 +118,7 @@ export function MomentGroups({ groups, width }: Props) {
   const isTablet = width >= 480;
   return (
     <View>
-      <View style={{ flexDirection: isTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 12 }}>
+      <View style={{ flexDirection: isTablet ? 'row' : 'column', gap: 12 }}>
         <GroupCard group={groups.onlyGood} kind="onlyGood" />
         <GroupCard group={groups.onlyHard} kind="onlyHard" />
       </View>
