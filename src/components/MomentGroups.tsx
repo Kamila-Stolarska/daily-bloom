@@ -73,14 +73,17 @@ function Bar({ axis, value, accent, gradientId }: { axis: Axis; value: number | 
   );
 }
 
-function GroupCard({ group, kind }: { group: MomentGroup; kind: 'onlyGood' | 'onlyHard' }) {
+function GroupCard({ group, kind, isTablet }: { group: MomentGroup; kind: 'onlyGood' | 'onlyHard'; isTablet: boolean }) {
   const meta = GROUP_META[kind];
   return (
     <View
       style={{
-        flex: 1,
-        minWidth: '47%',
-        backgroundColor: '#FBFAF1',
+        // Na telefonie karty mają pełną szerokość i stoją jedna pod drugą (kolumna).
+        // Na tablecie/webie od 640px stoją obok siebie po ~połowie szerokości.
+        width: isTablet ? '48%' : '100%',
+        // Te samo wypełnienie i obramowanie co karty w "Co Cię spotykało" (TagsSummary) —
+        // spójny styl kart w całej sekcji Analiza.
+        backgroundColor: 'rgba(255,255,255,0.5)',
         borderRadius: 12,
         borderWidth: 1,
         borderColor: '#E1D8CE',
@@ -119,9 +122,15 @@ export function MomentGroups({ groups }: Props) {
   const isTablet = width >= 640;
   return (
     <View>
-      <View style={{ flexDirection: isTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 12 }}>
-        <GroupCard group={groups.onlyGood} kind="onlyGood" />
-        <GroupCard group={groups.onlyHard} kind="onlyHard" />
+      <View
+        style={{
+          flexDirection: isTablet ? 'row' : 'column',
+          justifyContent: isTablet ? 'space-between' : undefined,
+          gap: 12,
+        }}
+      >
+        <GroupCard group={groups.onlyGood} kind="onlyGood" isTablet={isTablet} />
+        <GroupCard group={groups.onlyHard} kind="onlyHard" isTablet={isTablet} />
       </View>
     </View>
   );
