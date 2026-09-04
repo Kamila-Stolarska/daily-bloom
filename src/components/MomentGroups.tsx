@@ -81,7 +81,7 @@ function GroupCard({ group, kind }: { group: MomentGroup; kind: 'onlyGood' | 'on
       style={{
         flex: 1,
         minWidth: '47%',
-        backgroundColor: '#FBFAF1',
+        backgroundColor: 'rgba(255,255,255,0.5)',
         borderRadius: 12,
         borderWidth: 1,
         borderColor: '#E1D8CE',
